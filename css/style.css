@@ -1,0 +1,712 @@
+@charset "UTF-8";
+/* =============================================================
+   楽園雅苑 / style.css
+
+   構成：0.変数  1.リセット  2.土台（body・共通レイアウト）
+         3.ヘッダー  4.ハンバーガー／SPドロワー  5.予約ボタン
+         6.フッター  7.ユーティリティ
+
+   方針：モバイルファースト。既定を SP（375px）向けに書き、
+         @media (min-width: 768px) の中で PC（1440px）向けに上書きする。
+   ============================================================= */
+
+
+/* =============================================================
+   0. 変数
+   色・フォント・余白の「決めごと」をこの1箇所に集約する。
+   以降のスタイルでは生の値を書かず、必ずここの変数を参照する
+   ============================================================= */
+:root {
+
+    /* ---- 色 ----
+       値はすべて Figma の実測値。
+       アクセント（差し色）は Figma 上ブランドカラー1色しか無いため、
+       --color-accent は用意せず --color-main に一本化している */
+    --color-text:        #383838;  /* 墨。文字色・ヘッダー背景 */
+    --color-bg:          #ffffff;  /* ページ背景 */
+    --color-main:        #b8a973;  /* 金。予約ボタン・CTA・タグ・SPメニュー背景 */
+    --color-border:      #e4e4e4;  /* 罫線 */
+
+    /* 濃い面の上に乗せる白。いまは --color-bg と同じ値だが、
+       「ページの背景」と「濃色の上の白インク」は役割が別なので分けておく
+       （背景を生成りに変えても、ヘッダーの白文字は白のままであるべき） */
+    --color-white:       #ffffff;
+
+    /* 面として使う背景色 */
+    --color-bg-kinari:   #faf8f0;  /* 生成り。フッター背景 */
+    --color-bg-plan:     #f9f4e2;  /* プランカード背景 */
+    --color-bg-gray:     #f3f3f3;  /* 記事カード背景 */
+    --color-placeholder: #b5b5b5;  /* ページャーの非選択数字 */
+    --color-overlay:     rgba(0, 0, 0, .6);  /* 画像の上に重ねる暗幕（ヒーロー等） */
+
+    /* SPドロワーの背景。
+       Figma では rgba(0,0,0,.6) の半透明だが、それは背面が常に
+       TOP のヒーロー画像である前提の値。実際には下層ページの
+       白い本文が透けてしまうため、#383838 に暗幕を重ねた結果の色
+       （0x38 × 0.4 ≒ 0x16）を不透明色として持たせている */
+    --color-drawer-bg:   #161616;
+
+    /* ---- フォント ----
+       本文はゴシック（Noto Sans JP）、見出しは明朝（Noto Serif JP）。
+       和風の世界観は見出しの明朝が担い、本文は読みやすさを優先する */
+    --font-sans:  "Noto Sans JP", "Hiragino Sans", "Meiryo", sans-serif;
+    --font-serif: "Noto Serif JP", "Yu Mincho", "游明朝", serif;
+
+    /* ---- 余白 ----
+       セクションやブロックの間隔はこの4段階から選ぶ。
+       ※ここに無い半端な値（36px 等）は、ドロワーが狭い端末に
+         ちょうど収まるよう詰めた実測値なので、個別に px で持たせている */
+    --space-sm: 16px;
+    --space-md: 24px;
+    --space-lg: 40px;
+    --space-xl: 80px;
+
+    /* ---- サイズ ---- */
+    --header-height:     72px;   /* SP。PC では 178px に上書き */
+    --side-padding:      20px;   /* SP。PC では 120px に上書き */
+    --content-width:     1200px;
+
+    /* サイト全体で固定の字間（Figma 指定） */
+    --letter-spacing:    .3em;
+}
+
+
+/* =============================================================
+   1. リセット
+   必要な分だけ。reset.css を別ファイルに分けず、ここに畳んでいる
+   ============================================================= */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body,
+h1, h2, h3, h4, h5, h6,
+p, figure, blockquote,
+dl, dd, ul, ol {
+    margin: 0;
+    padding: 0;
+}
+
+/* 見出しは明朝（Noto Serif JP）。ブラウザ既定の太字と拡大も打ち消し、
+   大きさは各コンポーネント側で指定する方針にする */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-size: inherit;
+    font-weight: 400;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img, svg {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+button {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+address {
+    font-style: normal;  /* address 既定の斜体を打ち消す */
+}
+
+hr {
+    border: none;
+}
+
+
+/* =============================================================
+   2. 土台
+   ============================================================= */
+body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.75;
+
+    /* 字間はサイト全体で 0.3em 固定。例外だけ個別に打ち消す方針 */
+    letter-spacing: var(--letter-spacing);
+}
+
+/* ハンバーガーを開いている間、背面のページがスクロールしないようにする
+   （main.js が body に付け外しする） */
+body.is-nav-open {
+    overflow: hidden;
+}
+
+/* 本文の左右余白とコンテンツ幅の上限。ヘッダー・フッターも共通で使う */
+.l-inner {
+    width: 100%;
+    max-width: calc(var(--content-width) + var(--side-padding) * 2);
+    margin-inline: auto;
+    padding-inline: var(--side-padding);
+}
+
+/* キーボード操作でフォーカスしたときだけ現れる「本文へスキップ」 */
+.c-skip-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    padding: 12px 20px;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: 14px;
+    transform: translateY(-150%);
+}
+
+.c-skip-link:focus {
+    transform: translateY(0);
+}
+
+
+/* =============================================================
+   3. ヘッダー
+   SP：高さ 72px の帯／PC：高さ 178px の帯
+   TOP のみ --transparent で帯を外し、ヒーロー画像の上に重ねる
+   ============================================================= */
+.l-header {
+    position: relative;
+    z-index: 20;
+    background-color: var(--color-text);
+}
+
+/* TOP 用。ページの一番上に浮かせて、下のヒーローを透けさせる */
+.l-header--transparent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: transparent;
+}
+
+.l-header__inner {
+    display: flex;
+    align-items: center;
+    height: var(--header-height);
+    padding-inline: var(--side-padding);
+}
+
+.l-header__logo {
+    margin-right: auto;  /* ロゴを左端に、残りを右へ寄せる */
+    color: var(--color-white);
+}
+
+/* TODO: ロゴ画像（SVG）を配置したら、このテキスト用スタイルは削除してよい */
+.l-header__logo-text {
+    display: block;
+    font-size: 20px;
+    line-height: 1.4;
+}
+
+
+/* ---- ナビ本体 ----
+   SP ではドロワー（全画面）、PC では横並びのメニューになる。
+   既定（SP）は「画面外に置いて隠す」状態にしておき、
+   .is-open が付いたときだけ見せる。
+   display:none ではなく opacity/visibility を使うのは、
+   フェードで開閉させるため。 */
+.l-header__nav {
+    position: fixed;
+    top: var(--header-height);
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;  /* 項目が多い端末でも下まで届くように */
+
+    /* 不透明にしておかないと背面のページ内容が透けて読めなくなる */
+    background-color: var(--color-drawer-bg);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .3s ease, visibility .3s ease;
+}
+
+.l-header__nav.is-open {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ドロワー上部：ブランドカラーの面に主要5項目を縦積み（40px ピッチ） */
+.l-header__menu {
+    padding: 36px var(--side-padding);
+    background-color: var(--color-main);
+    text-align: center;
+}
+
+.l-header__item + .l-header__item {
+    margin-top: 8px;  /* 16px × line-height 2 ＝ 32px ＋ 8px ≒ 40px ピッチ */
+}
+
+.l-header__link {
+    display: inline-block;
+    padding: 4px 0;
+    color: var(--color-white);
+    font-size: 16px;
+    line-height: 2;
+    text-indent: var(--letter-spacing);  /* 字間で中央がずれる分を左に足して打ち消す */
+}
+
+/* 現在地。Figma は下線で表現している */
+.l-header__link.is-current {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+/* ドロワー下部：半透明のオーバーレイ側。補助リンクと予約ボタンを置く */
+.l-header__drawer-sub {
+    /* margin-top: auto を効かせるため、余った高さはこのブロックが受け取る。
+       項目が少ない端末では下寄せになり、多い端末では自然に伸びる */
+    margin-top: auto;
+    padding: var(--space-md) var(--side-padding) 32px;
+    text-align: center;
+}
+
+.l-header__menu--sub {
+    padding: 0;
+    background-color: transparent;
+}
+
+.l-header__menu--sub .l-header__link {
+    font-size: 14px;
+}
+
+
+/* =============================================================
+   4. ハンバーガー
+   3本線（幅20px・8px間隔）＋ その下に「menu」のラベル。
+   開いているときは1本目と3本目を回転させて × にする
+   ============================================================= */
+.l-header__hamburger {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-left: var(--space-sm);
+    padding: 4px;
+}
+
+/* 3本の線を重ねて置くための入れ物。高さ 18px ＝ 1px × 3 ＋ 間隔 8px × 2 弱 */
+.l-header__hamburger-lines {
+    position: relative;
+    display: block;
+    width: 20px;
+    height: 17px;
+}
+
+.l-header__hamburger-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background-color: var(--color-white);
+    transition: transform .3s ease, opacity .3s ease;
+}
+
+.l-header__hamburger-line:nth-child(1) { top: 0; }
+.l-header__hamburger-line:nth-child(2) { top: 8px; }
+.l-header__hamburger-line:nth-child(3) { top: 16px; }
+
+/* × への変形：上下の線を中央（8px の位置）へ寄せてから回す。
+   真ん中の線は消す */
+.l-header__hamburger.is-open .l-header__hamburger-line:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.l-header__hamburger.is-open .l-header__hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.l-header__hamburger.is-open .l-header__hamburger-line:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.l-header__hamburger-label {
+    color: var(--color-white);
+    font-size: 12px;
+    line-height: 1;
+    text-indent: var(--letter-spacing);
+}
+
+
+/* =============================================================
+   5. 予約ボタン（塗り＋角丸20px）
+   SP 80×26 ／ PC 140×40
+   ============================================================= */
+.c-btn-reserve {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 26px;
+    border-radius: 20px;
+    background-color: var(--color-main);
+    color: var(--color-white);
+    font-size: 16px;
+    line-height: 1;
+    text-indent: var(--letter-spacing);
+    transition: opacity .3s ease;
+}
+
+.c-btn-reserve:hover,
+.c-btn-reserve:focus-visible {
+    opacity: .8;
+}
+
+/* ドロワー内の予約ボタンは指で押しやすい大きさにする */
+.c-btn-reserve--drawer {
+    min-width: 200px;
+    height: 44px;
+    margin-top: var(--space-md);
+}
+
+
+/* =============================================================
+   6. フッター
+   SP・PC とも中央寄せ。宿ナビ → 区切り線 → 宿情報 →
+   サブナビ → コピーライト の順
+   ============================================================= */
+.l-footer {
+    background-color: var(--color-bg-kinari);
+}
+
+.l-footer__inner {
+    width: 100%;
+    max-width: calc(var(--content-width) + var(--side-padding) * 2);
+    margin-inline: auto;
+    padding: 52px var(--side-padding) 40px;
+    text-align: center;
+}
+
+.l-footer__logo {
+    display: inline-block;
+    margin-bottom: 48px;
+}
+
+/* TODO: ロゴ画像（SVG）を配置したら、このテキスト用スタイルは削除してよい */
+.l-footer__logo-text {
+    font-size: 24px;
+    line-height: 1.4;
+    text-indent: var(--letter-spacing);
+}
+
+.l-footer__menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;  /* 16px × 2 ＋ 8px ≒ 40px ピッチ */
+}
+
+.l-footer__link {
+    display: inline-block;
+    font-size: 16px;
+    line-height: 1.75;
+    text-indent: var(--letter-spacing);
+    transition: opacity .3s ease;
+}
+
+.l-footer__link:hover,
+.l-footer__link:focus-visible {
+    opacity: .6;
+}
+
+.l-footer__link.is-current {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+}
+
+.l-footer__divider {
+    height: 1px;
+    margin: var(--space-lg) 0;
+    background-color: var(--color-border);
+}
+
+/* 宿の情報（NAP）。Figma には無いが全ページに載せる */
+.l-footer__info {
+    margin-bottom: 32px;
+    font-size: 14px;
+    line-height: 2;
+}
+
+.l-footer__hotel-name {
+    font-size: 16px;
+}
+
+.l-footer__tel {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.l-footer__hours {
+    display: inline-block;
+    font-size: 12px;
+}
+
+.l-footer__operator {
+    font-size: 12px;
+}
+
+.l-footer__menu--sub {
+    gap: 6px;
+}
+
+.l-footer__menu--sub .l-footer__link {
+    font-size: 14px;
+}
+
+.l-footer__copyright {
+    margin-top: var(--space-lg);
+    font-size: 12px;
+    line-height: 1;
+    text-indent: var(--letter-spacing);
+}
+
+
+/* =============================================================
+   7. 仮ページ用（動作確認のための最小限）
+   TODO: 各ページの本実装を入れる際に、ここは差し替えて削除する
+   ============================================================= */
+
+/* ヒーロー。TOP は透過ヘッダーなので、ヘッダーの高さぶん上に余白を取り、
+   文字がヘッダーの下に潜り込まないようにする */
+.p-hero {
+    display: flex;
+    align-items: center;
+    min-height: 60vh;
+    padding-top: var(--header-height);
+    background-color: var(--color-text);
+    color: var(--color-white);
+    text-align: center;
+}
+
+.p-hero__catch {
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 2;
+}
+
+.p-section {
+    padding-block: 48px;
+}
+
+.p-section h1,
+.p-section h2 {
+    margin-bottom: var(--space-sm);
+    font-size: 22px;
+    font-weight: 400;
+    line-height: 40px;
+}
+
+
+/* =============================================================
+   8. ユーティリティ
+   ============================================================= */
+
+/* 本文（ゴシック）の中で、明朝にしたい短いテキストに付ける。
+   見出し以外の欧文ラベル（menu / © RAKUGAEN. など）で使う */
+.u-serif {
+    font-family: var(--font-serif);
+}
+
+/* 画面には出さず、支援技術にだけ読ませたいテキスト */
+.u-visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+
+/* =============================================================
+   PC（768px 以上）
+   ここから下でだけ、SP 向けの既定を上書きする
+   ============================================================= */
+@media (min-width: 768px) {
+
+    :root {
+        --header-height: 178px;
+        --side-padding:  120px;
+    }
+
+    /* ---- ヘッダー ---- */
+    .l-header__logo-text {
+        font-size: 28px;
+    }
+
+    /* ドロワーをやめて、ただの横並びメニューに戻す */
+    .l-header__nav {
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        overflow: visible;
+        margin-right: var(--space-lg);
+        background-color: transparent;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .l-header__menu {
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .l-header__item + .l-header__item {
+        margin-top: 0;
+    }
+
+    .l-header__link {
+        padding: 0;
+        font-size: 18px;
+        line-height: 46px;
+        text-indent: 0;
+        transition: opacity .3s ease;
+    }
+
+    .l-header__link:hover,
+    .l-header__link:focus-visible {
+        opacity: .7;
+    }
+
+    /* 補助リンクと予約ボタンは SP ドロワー専用。PC ではフッターが受け持つ */
+    .l-header__drawer-sub {
+        display: none;
+    }
+
+    /* ハンバーガーも不要 */
+    .l-header__hamburger {
+        display: none;
+    }
+
+    /* ---- 予約ボタン ---- */
+    .c-btn-reserve--header {
+        min-width: 140px;
+        height: 40px;
+    }
+
+    /* ---- フッター ---- */
+    .l-footer__inner {
+        padding-top: 100px;
+        padding-bottom: 60px;
+    }
+
+    .l-footer__logo {
+        margin-bottom: var(--space-xl);
+    }
+
+    /* 宿ナビ7項目を横一列に。狭い画面では折り返す */
+    .l-footer__menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 20px 48px;
+    }
+
+    .l-footer__link {
+        font-size: 18px;
+        text-indent: 0;
+    }
+
+    .l-footer__divider {
+        margin: 52px 0;
+    }
+
+    .l-footer__info {
+        margin-bottom: var(--space-lg);
+        font-size: 15px;
+    }
+
+    .l-footer__menu--sub {
+        gap: 20px var(--space-lg);
+    }
+
+    .l-footer__menu--sub .l-footer__link {
+        font-size: 14px;
+    }
+
+    .l-footer__copyright {
+        margin-top: 60px;
+    }
+
+    /* ---- 仮ページ ---- */
+    .p-hero__catch {
+        font-size: 34px;
+    }
+
+    .p-section {
+        padding-block: var(--space-xl);
+    }
+
+    .p-section h1,
+    .p-section h2 {
+        font-size: 28px;
+    }
+}
+
+
+/* =============================================================
+   縦の短い端末（iPhone SE 相当 = 高さ 667px など）
+   ドロワーの項目数が多いぶん、既定の余白のままだと
+   最下部の予約ボタンが画面外に出てしまうので詰める。
+
+   max-width も付けているのは、この下に PC 用の指定があり、
+   幅の広い画面でこの指定が後勝ちしてしまうのを防ぐため
+   ============================================================= */
+@media (max-width: 767px) and (max-height: 720px) {
+
+    .l-header__menu {
+        padding-block: var(--space-md);
+    }
+
+    .l-header__item + .l-header__item {
+        margin-top: 0;
+    }
+
+    .l-header__drawer-sub {
+        padding: var(--space-sm) var(--side-padding) var(--space-md);
+    }
+
+    .c-btn-reserve--drawer {
+        margin-top: var(--space-sm);
+    }
+}
+
+
+/* =============================================================
+   アニメーションを控えたい設定の利用者向け
+   （OS の「視差効果を減らす」が有効なとき）
+   ============================================================= */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
