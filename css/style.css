@@ -5,7 +5,7 @@
    構成：0.変数  1.リセット  2.土台（body・共通レイアウト）
          3.ヘッダー  4.ハンバーガー／SPドロワー  5.予約ボタン
          6.フッター  7.繰り返し使うパーツ  8.TOPページ
-         9.ユーティリティ
+         9.下層ページ（運営会社・サービス）  10.ユーティリティ
 
    方針：モバイルファースト。既定を SP（375px）向けに書き、
          @media (min-width: 768px) の中で PC（1440px）向けに上書きする。
@@ -25,7 +25,19 @@
        --color-accent は用意せず --color-main に一本化している */
     --color-text:        #383838;  /* 墨。文字色・ヘッダー背景 */
     --color-bg:          #ffffff;  /* ページ背景 */
-    --color-main:        #b8a973;  /* 金。予約ボタン・CTA・タグ・SPメニュー背景 */
+    /* 金。予約ボタン・CTA・タグ・SPメニュー背景。
+
+       この色は白に対するコントラスト比が 2.34:1 で、WCAG AA の
+       基準（通常文字 4.5:1）を満たさない。白文字を載せる箇所
+       （予約ボタン・お部屋タブ・記事タグ）と、白地にこの色で文字を
+       置く箇所（CTAボタンのラベル）が該当する。
+
+       Figma の指定色をそのまま使う方針のため、意図的にこの値のまま
+       にしている。AA を満たすには #817341 相当（4.71:1）まで
+       暗くする必要があり、ブランドカラーの変更はデザイン判断になる。
+       Lighthouse の Accessibility が 73/100 に留まるのはこれが理由で、
+       構造面（見出し階層・ランドマーク・代替テキスト等）に指摘はない。 */
+    --color-main:        #b8a973;
     --color-border:      #e4e4e4;  /* 罫線 */
 
     /* 濃い面の上に乗せる白。いまは --color-bg と同じ値だが、
@@ -40,6 +52,7 @@
     --color-placeholder: #b5b5b5;  /* ページャーの非選択数字 */
     --color-tab-off:     #edebd7;  /* 選択されていないタブ（お部屋） */
     --color-card-rule:   #c9c9c9;  /* プランカードの区切り線 */
+    --color-link:        #00c2ff;  /* メール・外部URLのリンク */
     --color-overlay:     rgba(0, 0, 0, .6);  /* 画像の上に重ねる暗幕（ヒーロー等） */
 
     /* SPドロワーの背景。
@@ -815,6 +828,165 @@ body.is-nav-open {
 }
 
 
+/* -------------------------------------------------------------
+   7-6. パンくず `.c-breadcrumb`
+   Figma: PC 14px / SP 12px、行送り40。
+   区切りの「＞」は CSS で描く（読み上げのノイズを避けるため）
+   ------------------------------------------------------------- */
+.c-breadcrumb {
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 40px;
+}
+
+.c-breadcrumb__list {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+/* 2つ目以降の項目の前に全角スペース＋＞＋全角スペースを置く。
+   Figma の文字列「トップ　＞　運営会社情報」と同じ見た目にする */
+.c-breadcrumb__item + .c-breadcrumb__item::before {
+    content: "　＞　";
+}
+
+.c-breadcrumb__link {
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+
+.c-breadcrumb__link:hover,
+.c-breadcrumb__link:focus-visible {
+    text-decoration: none;
+}
+
+/* 現在地はブランドカラー・下線なし（Figma 準拠） */
+.c-breadcrumb__current {
+    color: var(--color-main);
+}
+
+
+/* -------------------------------------------------------------
+   7-7. 定義テーブル `.c-table`
+   運営会社の会社概要と、サービスの泉質・効能で共用する。
+
+   SP はラベルを値の上に積み、PC で左右2列に変わる。
+   Figma: 枠線・区切り線とも 1px `#e4e4e4`
+          PC ラベル列230px（本文900のうち）／SP 行ピッチ80px
+   ------------------------------------------------------------- */
+.c-table {
+    border: 1px solid var(--color-border);
+}
+
+.c-table__row {
+    padding: 6px 20px;
+}
+
+.c-table__row + .c-table__row {
+    border-top: 1px solid var(--color-border);
+}
+
+.c-table__label {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 34px;
+}
+
+.c-table__value {
+    margin-left: 0;      /* dd の既定の字下げを消す */
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 34px;
+}
+
+/* 長文は両端揃え。行送りも本文用に詰める（Figma 準拠） */
+.c-table__value--long {
+    line-height: 30px;
+    text-align: justify;
+}
+
+/* サービスのテーブルは運営会社より行送りが狭い（SP24 / PC34） */
+.p-service__table .c-table__value--long,
+.p-service__table .c-table__list,
+.p-service__table .c-table__note {
+    line-height: 24px;
+}
+
+/* 効能の箇条書き。リセットで list-style を消しているので戻す */
+.c-table__list {
+    padding-left: 1.4em;
+    list-style: disc;
+}
+
+.c-table__note {
+    margin-top: 0;
+}
+
+/* メール・URL のリンク（Figma は水色＋下線） */
+.c-table__link {
+    color: var(--color-link);
+    text-decoration: underline;
+    text-underline-offset: .2em;
+    word-break: break-all;   /* 長いメールアドレスで横に溢れさせない */
+}
+
+.c-table__link:hover,
+.c-table__link:focus-visible {
+    text-decoration: none;
+}
+
+/* 電話番号は PC ではリンクにする意味が薄いので、
+   見た目だけ本文と揃える（タップ発信は SP で効く） */
+.c-table__link--tel {
+    color: inherit;
+    text-decoration: none;
+}
+
+
+/* -------------------------------------------------------------
+   7-8. サービスの見出し `.c-service-head`
+   中央寄せの見出しの下に 90×2px の金のバー。
+   TOP の `.c-section-title`（和文＋縦線＋欧文）とは別型
+   ------------------------------------------------------------- */
+.c-service-head {
+    text-align: center;
+}
+
+.c-service-head__text {
+    display: inline-block;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 40px;
+}
+
+/* バーは擬似要素で描く。見出しの直下に中央寄せで置く */
+.c-service-head::after {
+    content: "";
+    display: block;
+    width: 70px;
+    height: 2px;
+    margin: 7px auto 0;
+    background-color: var(--color-main);
+}
+
+
+/* -------------------------------------------------------------
+   7-9. 写真の並び `.c-photo-grid`
+   Figma: 3枚組 380×280（間隔30）／ 2枚組 580×370（間隔40）
+   SP はどちらも1列
+   ------------------------------------------------------------- */
+.c-photo-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.c-photo-grid img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+
 /* =============================================================
    8. TOP ページ
 
@@ -1250,31 +1422,161 @@ body.is-nav-open {
 
 
 /* =============================================================
-   8-9. 仮ページ用（暫定）
+   9. 下層ページ（運営会社・サービス）
 
-   service.php がまだ動作確認用の仮ページなので、
-   最低限の余白だけ残している。
-   TODO: PR3（運営会社・サービス）で本実装したら、この節ごと削除する
+   Figma: 運営会社 PC `510:2` / SP `510:3`
+          サービス   PC `538:2291` / SP `538:2380`
+
+   ヘッダー直下は全下層ページ共通で
+   「パンくず → ページタイトル」の並びになる。
    ============================================================= */
-.p-section {
-    padding-block: 60px;
+
+/* -------------------------------------------------------------
+   9-1. ページ見出し（パンくずの下のタイトル）
+   Figma: SP 22px / PC 28px、どちらも中央寄せ・行送り40
+   ------------------------------------------------------------- */
+.c-breadcrumb {
+    margin-top: 18px;
 }
 
-.p-section h1 {
-    margin-bottom: var(--space-sm);
+.p-page-head {
+    margin-top: 26px;
+    text-align: center;
+}
+
+.p-page-head__title {
+    font-family: var(--font-serif);
     font-size: 22px;
     line-height: 40px;
 }
 
 
+/* -------------------------------------------------------------
+   9-2. 運営会社
+   ------------------------------------------------------------- */
+.p-about {
+    padding-block: 25px 52px;
+}
+
+
+/* -------------------------------------------------------------
+   9-3. サービス
+   3つのセクション（温泉 / 施設情報 / その他施設・サービス）が
+   同じ `.p-service` で並ぶ
+   ------------------------------------------------------------- */
+.p-service {
+    padding-block: 12px 0;
+}
+
+/* 2つ目以降のセクションは上に間隔を取る */
+.p-service + .p-service {
+    padding-top: 40px;
+}
+
+/* 最後のセクションとフッターの間 */
+.p-service:last-of-type {
+    padding-bottom: 52px;
+}
+
+/* 導入文（温泉セクションのみ） */
+.p-service__lead {
+    margin-top: 35px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+}
+
+.p-service__text {
+    margin-top: 6px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+    text-align: justify;
+}
+
+/* 客室・レストランの説明文は中央寄せ（Figma 準拠）。
+   両端揃えを打ち消す */
+.p-service__text--center {
+    text-align: center;
+}
+
+/* 客室 / レストラン / 会議室 / マッサージ の小見出し */
+.p-service__subhead {
+    margin-top: 47px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+}
+
+/* セクション見出し（金のバー）の直後に来る小見出しは、
+   写真の後に置かれる場合より間隔が狭い（Figma 準拠） */
+.c-service-head + .p-service__subhead {
+    margin-top: 30px;
+}
+
+/* 見出しの直後に写真が来る場合（会議室・マッサージ）は
+   本文が無いぶん間隔を詰める */
+.p-service__subhead + .c-photo-grid {
+    margin-top: 32px;
+}
+
+.c-photo-grid {
+    margin-top: 48px;
+}
+
+.p-service__table {
+    margin-top: 40px;
+}
+
+/* 温泉セクションの写真は次にテーブルが続く（Figma実測 40px） */
+.p-service__photos--sponly {
+    margin-top: 48px;
+}
+
+.p-service__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+/* 営業時間 */
+.p-service__hours {
+    margin-top: 20px;
+    font-family: var(--font-serif);
+    text-align: center;
+}
+
+.p-service__hours-line {
+    font-size: 14px;
+    line-height: 32px;
+}
+
+/* 注記は少し小さく。SP は行送りも詰める（Figma実測 12px/24） */
+.p-service__hours-note {
+    margin-top: 20px;
+    font-size: 12px;
+    line-height: 24px;
+    text-align: justify;
+}
+
+
 /* =============================================================
-   9. ユーティリティ
+   10. ユーティリティ
    ============================================================= */
 
 /* 本文（ゴシック）の中で、明朝にしたい短いテキストに付ける。
    見出し以外の欧文ラベル（menu / © RAKUGAEN. など）で使う */
 .u-serif {
     font-family: var(--font-serif);
+}
+
+/* PC だけで改行したい箇所に付ける。
+   Figma では PC に明示的な改行があり、SP は流し込みという箇所がある
+   （サービスの客室・レストランの説明文） */
+.u-br-pc {
+    display: none;
 }
 
 /* SP だけで改行したい箇所に付ける。
@@ -1810,9 +2112,13 @@ body.is-nav-open {
     }
 
 
-    /* PC では SP 用の改行をやめる */
+    /* PC では SP 用の改行をやめ、PC 用の改行を有効にする */
     .u-br-sp {
         display: none;
+    }
+
+    .u-br-pc {
+        display: inline;
     }
 
 
@@ -1824,6 +2130,176 @@ body.is-nav-open {
 
     .p-news__list {
         margin-top: 68px;
+    }
+
+
+    /* ---- 共通パーツ（下層ページ） ---- */
+
+    .c-breadcrumb {
+        font-size: 14px;
+    }
+
+    /* Figma実測：PC はラベル列230px ＋ 値列670px の2列。
+       縦の区切り線はラベル側の右罫線で描く */
+    .c-table__row {
+        display: grid;
+        grid-template-columns: 230px 1fr;
+        padding: 0;
+    }
+
+    .c-table__label {
+        padding: 9px 20px;
+        border-right: 1px solid var(--color-border);
+        font-size: 16px;
+    }
+
+    .c-table__value {
+        padding: 9px 20px;
+        font-size: 16px;
+    }
+
+    .c-table__value--long {
+        line-height: 32px;
+    }
+
+    .c-service-head__text {
+        font-size: 24px;
+    }
+
+    /* Figma実測：PC のバーは 90×2px、見出しとの間隔は13px */
+    .c-service-head::after {
+        width: 90px;
+        margin-top: 13px;
+    }
+
+    /* Figma実測：3枚組 380×280（間隔30）／2枚組 580×370（間隔40） */
+    .c-photo-grid--3 {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
+    .c-photo-grid--2 {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px;
+    }
+
+
+    /* ---- 9-1. ページ見出し ---- */
+
+    .c-breadcrumb {
+        margin-top: 67px;
+    }
+
+    .p-page-head {
+        margin-top: 87px;
+    }
+
+    .p-page-head__title {
+        font-size: 28px;
+    }
+
+
+    /* ---- 9-2. 運営会社 ---- */
+
+    .p-about {
+        padding-block: 66px 200px;
+    }
+
+    /* Figma実測：テーブルは本文900px（x=270〜1170）。
+       本文幅1200の中央に置く */
+    .p-about .c-table {
+        max-width: 900px;
+        margin-inline: auto;
+    }
+
+
+    /* ---- 9-3. サービス ---- */
+
+    .p-service {
+        padding-block: 58px 0;
+    }
+
+    .p-service + .p-service {
+        padding-top: 72px;
+    }
+
+    .p-service:last-of-type {
+        padding-bottom: 200px;
+    }
+
+    .p-service__lead {
+        margin-top: 46px;
+        font-size: 22px;
+        line-height: 34px;
+    }
+
+    .p-service__text {
+        margin-top: 38px;
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    .p-service__subhead {
+        margin-top: 74px;
+        font-size: 22px;
+    }
+
+    /* Figma実測：バー下端 → 小見出しの行頭で 46px */
+    .c-service-head + .p-service__subhead {
+        margin-top: 46px;
+    }
+
+    .p-service__subhead + .c-photo-grid {
+        margin-top: 66px;
+    }
+
+    .c-photo-grid {
+        margin-top: 68px;
+    }
+
+    /* 温泉セクションの2枚は SP にしか無い。
+       PC は Figma どおり約490pxの余白として残す */
+    .p-service__photos--sponly {
+        display: block;
+        height: 498px;
+        margin-top: 0;
+    }
+
+    .p-service__photos--sponly > li {
+        display: none;
+    }
+
+    /* Figma実測：テーブルは本文900px（x=270〜1170） */
+    .p-service__table {
+        max-width: 900px;
+        margin-top: 0;
+        margin-inline: auto;
+    }
+
+    /* サービスのテーブルは行送り34px。
+       運営会社の会社概要（32px）とは値が違うので、ここで上書きする */
+    .p-service__table .c-table__value--long,
+    .p-service__table .c-table__list,
+    .p-service__table .c-table__note {
+        line-height: 34px;
+    }
+
+    .p-service__action {
+        margin-top: 60px;
+    }
+
+    .p-service__hours {
+        margin-top: 20px;
+    }
+
+    .p-service__hours-line {
+        font-size: 16px;
+    }
+
+    .p-service__hours-note {
+        margin-top: 32px;
+        line-height: 32px;
+        text-align: center;
     }
 }
 
