@@ -5,7 +5,8 @@
    構成：0.変数  1.リセット  2.土台（body・共通レイアウト）
          3.ヘッダー  4.ハンバーガー／SPドロワー  5.予約ボタン
          6.フッター  7.繰り返し使うパーツ  8.TOPページ
-         9.下層ページ（運営会社・サービス）  10.ユーティリティ
+         9.下層ページ（運営会社・サービス・ブログ・お知らせ）
+         10.ユーティリティ
 
    方針：モバイルファースト。既定を SP（375px）向けに書き、
          @media (min-width: 768px) の中で PC（1440px）向けに上書きする。
@@ -53,6 +54,7 @@
     --color-tab-off:     #edebd7;  /* 選択されていないタブ（お部屋） */
     --color-card-rule:   #c9c9c9;  /* プランカードの区切り線 */
     --color-link:        #00c2ff;  /* メール・外部URLのリンク */
+    --color-marker:      #ffe86d;  /* 本文中のマーカー強調 */
     --color-overlay:     rgba(0, 0, 0, .6);  /* 画像の上に重ねる暗幕（ヒーロー等） */
 
     /* SPドロワーの背景。
@@ -736,7 +738,7 @@ body.is-nav-open {
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
-    margin-top: 2px;
+    margin-top: 1px;
     font-family: var(--font-serif);
     font-size: 14px;
     line-height: 26px;
@@ -841,7 +843,32 @@ body.is-nav-open {
 
 .c-breadcrumb__list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+}
+
+/* 前半の項目は縮めず、最後（記事タイトル）だけを省略記号で詰める。
+   テキスト自体は切らないので、読み上げには全文が渡る
+   （breadcrumb-spec.md の方針） */
+/* 区切りの ::before と現在地の span を同じ行に並べるため、
+   項目自体をフレックスにする。
+   （現在地を block にすると、インラインの ::before と行が分かれてしまう） */
+.c-breadcrumb__item {
+    display: flex;
+    flex: none;
+    white-space: nowrap;
+}
+
+/* min-width:0 が無いと、フレックスの子は中身の幅より縮まないため
+   省略記号が効かない */
+.c-breadcrumb__item:last-child {
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+.c-breadcrumb__current {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 2つ目以降の項目の前に全角スペース＋＞＋全角スペースを置く。
@@ -985,6 +1012,234 @@ body.is-nav-open {
     height: auto;
     object-fit: cover;
 }
+
+
+/* -------------------------------------------------------------
+   7-10. カテゴリ絞り込み `.c-filter-chip`
+   Figma: 高さ40 / 角丸20。
+     選択中 … ブランドカラー塗り＋白文字
+     非選択 … 白地＋1pxのブランドカラー枠＋ブランドカラーの文字
+   ------------------------------------------------------------- */
+/* SP は 106×30 の等幅チップを3列に並べる（Figma実測 間隔 9px / 8px）。
+   PC では内容なりの幅で横一列に戻す */
+.c-filter__list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 9px;
+}
+
+.c-filter-chip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 30px;
+    padding-inline: 20px;
+    border: 1px solid var(--color-main);
+    border-radius: 20px;
+    background-color: var(--color-white);
+    color: var(--color-main);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 28px;
+    transition: background-color .3s ease, color .3s ease;
+
+    /* 字間は最後の一文字の後ろにも入る。Figma のチップ幅
+       （ALL 87 / 観光地・豆知識 105 / 料理 82）は行末の字間を
+       含まない値なので、右の余白をその分だけ詰めて幅を合わせる */
+    padding-right: calc(20px - var(--letter-spacing));
+}
+
+/* 現在地。aria-current を見た目の根拠にする */
+.c-filter-chip.is-current {
+    background-color: var(--color-main);
+    color: var(--color-white);
+}
+
+.c-filter-chip:hover,
+.c-filter-chip:focus-visible {
+    background-color: var(--color-main);
+    color: var(--color-white);
+}
+
+
+/* -------------------------------------------------------------
+   7-11. ページャー `.c-pagination`
+   Figma: 数字ピッチ40・中央寄せ。
+     現在地 … 32×32 の文字色ベタ塗り＋白い数字
+     それ以外 … 「未入力」色の数字だけ
+   ------------------------------------------------------------- */
+.c-pagination__list {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 1マス40px。中の数字はさらに中央に置く */
+.c-pagination__item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 32px;
+}
+
+.c-pagination__link,
+.c-pagination__current {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 28px;
+    text-indent: var(--letter-spacing);
+}
+
+.c-pagination__current {
+    background-color: var(--color-text);
+    color: var(--color-white);
+}
+
+.c-pagination__link {
+    color: var(--color-placeholder);
+    transition: color .3s ease;
+}
+
+.c-pagination__link:hover,
+.c-pagination__link:focus-visible {
+    color: var(--color-text);
+}
+
+
+/* -------------------------------------------------------------
+   7-12. 目次 `.c-toc`（ブログ詳細）
+   Figma: 780×356 の薄いグレーの箱。
+   見出しの左に 2×16 のブランドカラーのバーが付く
+   ------------------------------------------------------------- */
+.c-toc {
+    padding: 17px 20px 14px;
+    background-color: var(--color-bg-gray);
+}
+
+/* バーは擬似要素で描き、見出しの文字と縦位置を合わせる */
+.c-toc__heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 24px;
+}
+
+.c-toc__heading::before {
+    content: "";
+    width: 2px;
+    height: 14px;
+    background-color: var(--color-main);
+}
+
+.c-toc__list {
+    margin-top: 8px;
+}
+
+/* h2 の項目どうしは罫線で区切る */
+.c-toc__item + .c-toc__item {
+    margin-top: 14px;
+    padding-top: 15px;
+    border-top: 1px solid var(--color-border);
+}
+
+.c-toc__link {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 24px;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+
+.c-toc__sublist {
+    margin-top: 5px;
+}
+
+.c-toc__sublink {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 22.5px;
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+
+/* 先頭の「- 」は文章ではなく体裁なので CSS で描く */
+.c-toc__subitem::before {
+    content: "- ";
+}
+
+/* Figma の h3 項目は SP で 45px ピッチ。2行で 45px になる行送りにする
+   （Figma のテキスト指定は24pxだが、その値だと項目どうしが重なる） */
+.c-toc__subitem {
+    display: flex;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 22.5px;
+}
+
+.c-toc__link:hover,
+.c-toc__sublink:hover,
+.c-toc__link:focus-visible,
+.c-toc__sublink:focus-visible {
+    text-decoration: none;
+}
+
+
+/* -------------------------------------------------------------
+   7-13. 人気記事 `.c-rank-list`（ブログ詳細のサイドバー）
+   Figma: サムネ 53×34 ＋ タイトル 195×34、1件ごとに罫線
+   ------------------------------------------------------------- */
+.c-rank-list__item + .c-rank-list__item {
+    border-top: 1px solid var(--color-border);
+}
+
+.c-rank-list__link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-block: 20px 19px;   /* 区切り線1pxを含めて74pxピッチ（Figma実測） */
+    transition: opacity .3s ease;
+}
+
+.c-rank-list__link:hover,
+.c-rank-list__link:focus-visible {
+    opacity: .7;
+}
+
+.c-rank-list__thumb {
+    flex: none;
+    width: 53px;
+    height: 34px;
+    object-fit: cover;
+}
+
+/* タイトルは2行で切る（Figma も2行ぶんの高さ） */
+.c-rank-list__title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 17px;
+}
+
+
+/* -------------------------------------------------------------
+   7-14. 記事カードの横長版 `.c-card-article--wide`
+   関連記事で使う。Figma: 415×418（サムネ 415×250）
+   ------------------------------------------------------------- */
+/* 関連記事のカードは PC だけ大きい（415×250）。
+   SP は一覧のカードと同じ 335×200 なので、ここでは何も変えない */
 
 
 /* =============================================================
@@ -1562,6 +1817,181 @@ body.is-nav-open {
 }
 
 
+/* -------------------------------------------------------------
+   9-4. ブログ一覧
+   ------------------------------------------------------------- */
+.p-blog-list {
+    padding-block: 25px 52px;
+}
+
+.p-blog-list__grid {
+    display: grid;
+    gap: 24px;
+    margin-top: 40px;
+}
+
+.c-pagination {
+    margin-top: 40px;
+}
+
+
+/* -------------------------------------------------------------
+   9-5. お知らせ一覧
+   ------------------------------------------------------------- */
+.p-news-list {
+    padding-block: 25px 52px;
+}
+
+
+/* -------------------------------------------------------------
+   9-6. ブログ詳細
+
+   SP は1カラム（記事 → サイドバー）、PC で2カラムに変わる
+   ------------------------------------------------------------- */
+.p-article {
+    padding-block: 25px 0;
+}
+
+/* SP では記事本体に枠を付けず、本文の中に直接流す（Figma 準拠）。
+   枠が付くのは PC のときだけ */
+.p-article__side {
+    padding: 14px 20px 2px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-white);
+}
+
+.p-article__side {
+    margin-top: 36px;
+}
+
+.p-article__title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 36px;
+}
+
+/* 日付とカテゴリを1行に並べる */
+.p-article__meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.p-article__date {
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 28px;
+}
+
+.p-article__hero {
+    width: 100%;
+    height: auto;
+    margin-top: 25px;
+    object-fit: cover;
+}
+
+.c-toc {
+    margin-top: 23px;
+}
+
+/* ---- 本文 ----
+   見出し・段落・テーブルが続くので、要素セレクタでまとめて整える。
+   記事の中身は CMS から来る想定で、クラスを付けられないため */
+.p-article__body {
+    margin-top: 19px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 30px;
+    text-align: justify;
+}
+
+.p-article__body p + * {
+    margin-top: 28px;
+}
+
+.p-article__h2 {
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-main);
+    font-size: 18px;
+    line-height: 28px;
+    text-align: left;
+}
+
+.p-article__h3 {
+    font-size: 16px;
+    line-height: 28px;
+    text-align: left;
+}
+
+.p-article__h2 + p {
+    margin-top: 13px;
+}
+
+.p-article__h3 + p {
+    margin-top: 5px;
+}
+
+.p-article__body strong {
+    font-weight: 600;
+}
+
+/* マーカー。ブラウザ既定の黄色ではなく Figma の指定色を使う */
+.p-article__body mark {
+    background-color: var(--color-marker);
+    color: inherit;
+}
+
+.p-article__body p + .p-article__table {
+    margin-top: 32px;
+}
+
+/* 記事内のテーブルは会社概要より行が浅い（Figma SP 行の高さ92px）。
+   ラベル・値とも12px/行送り24で、値は2行に折り返す */
+.p-article__table .c-table__row {
+    padding: 11px 16px 7px;
+}
+
+.p-article__table .c-table__label,
+.p-article__table .c-table__value {
+    font-size: 12px;
+    line-height: 24px;
+}
+
+/* ---- サイドバー ---- */
+.p-article__side-title {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 28px;
+    text-align: center;
+}
+
+.c-rank-list {
+    margin-top: 10px;
+    border-top: 1px solid var(--color-border);
+}
+
+
+/* -------------------------------------------------------------
+   9-7. 関連記事
+   ------------------------------------------------------------- */
+.p-related {
+    padding-block: 44px 52px;
+}
+
+.p-related__title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 30px;
+}
+
+.p-related__list {
+    display: grid;
+    gap: 24px;
+    margin-top: 17px;
+}
+
+
 /* =============================================================
    10. ユーティリティ
    ============================================================= */
@@ -1788,9 +2218,10 @@ body.is-nav-open {
         line-height: 26px;
     }
 
-    /* Figma実測：行の高さ 110px。日付と見出しで 56px ぶんなので上下 27px */
+    /* Figma実測：行ピッチ 110px。日付と見出しで 56px ぶん。
+       区切り線の1pxもピッチに含まれるので、下だけ1px詰めて合わせる */
     .c-list-news__link {
-        padding-block: 27px;
+        padding-block: 27px 26px;
         gap: 0 24px;
     }
 
@@ -2300,6 +2731,225 @@ body.is-nav-open {
         margin-top: 32px;
         line-height: 32px;
         text-align: center;
+    }
+
+
+    /* ---- 共通パーツ（一覧・詳細） ---- */
+
+    /* Figma実測：PC は内容なりの幅で横一列、高さ40・間隔16px */
+    .c-filter__list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .c-filter-chip {
+        display: inline-flex;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .c-card-article--wide .c-card-article__thumb {
+        height: 250px;
+    }
+
+    /* Figma実測：目次は 780×356 */
+    .c-toc {
+        padding: 20px 24px 21px;
+    }
+
+    .c-toc__heading {
+        font-size: 16px;
+        line-height: 28px;
+    }
+
+    .c-toc__heading::before {
+        height: 16px;
+    }
+
+    .c-toc__list {
+        margin-top: 7px;
+    }
+
+    /* Figma実測：PC は h2 16px/26、h3 14px（項目ピッチ22px） */
+    .c-toc__link {
+        font-size: 16px;
+        line-height: 26px;
+    }
+
+    .c-toc__sublist {
+        margin-top: 6px;
+    }
+
+    .c-toc__sublink,
+    .c-toc__subitem {
+        font-size: 14px;
+        line-height: 22px;
+    }
+
+    .c-toc__item + .c-toc__item {
+        margin-top: 16px;
+        padding-top: 18px;
+    }
+
+    .c-rank-list__title {
+        font-size: 12px;
+        line-height: 17px;
+    }
+
+
+    /* ---- 9-4. ブログ一覧 ---- */
+
+    .p-blog-list {
+        padding-block: 66px 200px;
+    }
+
+    /* Figma実測：380×398 を 30px 間隔で3列、行ピッチ430 */
+    .p-blog-list__grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 32px 30px;
+        margin-top: 47px;
+    }
+
+    .c-pagination {
+        margin-top: 60px;
+    }
+
+
+    /* ---- 9-5. お知らせ一覧 ---- */
+
+    .p-news-list {
+        padding-block: 66px 200px;
+    }
+
+
+    /* ---- 9-6. ブログ詳細 ---- */
+
+    .p-article {
+        padding-block: 93px 0;
+    }
+
+    /* Figma実測：記事860px ＋ サイドバー300px、間40px */
+    .p-article__inner {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* Figma実測：内側の余白は左右40px。上は文字のトリミング分を差し引いて28px */
+    /* PC では記事本体にも枠が付く */
+    .p-article__main {
+        padding: 28px 40px 40px;
+        border: 1px solid var(--color-border);
+        background-color: var(--color-white);
+    }
+
+    .p-article__side {
+        margin-top: 0;
+        padding: 14px 20px 20px;
+    }
+
+    .p-article__title {
+        font-size: 24px;
+        line-height: 48px;
+    }
+
+    .p-article__meta {
+        margin-top: 8px;
+    }
+
+    .p-article__date {
+        font-size: 14px;
+    }
+
+    .p-article__hero {
+        height: 470px;
+        margin-top: 20px;
+    }
+
+    .c-toc {
+        margin-top: 28px;
+    }
+
+    .p-article__body {
+        margin-top: 20px;
+        font-size: 16px;
+        line-height: 32px;
+    }
+
+    .p-article__body p + * {
+        margin-top: 28px;
+    }
+
+    .p-article__h2 {
+        font-size: 22px;
+        line-height: 32px;
+    }
+
+    .p-article__h3 {
+        font-size: 20px;
+        line-height: 32px;
+    }
+
+    .p-article__h2 + p {
+        margin-top: 16px;
+    }
+
+    .p-article__h3 + p {
+        margin-top: 7px;
+    }
+
+    .c-toc {
+        margin-top: 28px;
+    }
+
+    /* `p + *` のほうが詳細度が高いので、テーブルは同じ形で上書きする */
+    .p-article__body p + .p-article__table {
+        margin-top: 42px;
+    }
+
+    /* 記事内のテーブルは PC では会社概要と同じ組み（行の高さ52px）。
+       SP 用に詰めた値をここで戻す */
+    .p-article__table .c-table__row {
+        padding: 0;
+    }
+
+    .p-article__table .c-table__label,
+    .p-article__table .c-table__value {
+        padding: 9px 20px;
+        font-size: 16px;
+        line-height: 34px;
+    }
+
+    /* SP で詰めた見出し下の余白を戻す */
+    .p-article__h2 {
+        padding-bottom: 8px;
+    }
+
+    .p-article__side-title {
+        font-size: 16px;
+    }
+
+
+    /* ---- 9-7. 関連記事 ---- */
+
+    .p-related {
+        padding-block: 68px 200px;
+    }
+
+    .p-related__title {
+        font-size: 22px;
+        line-height: 34px;
+    }
+
+    /* Figma実測：415×418 を 30px 間隔で2列＝860px。
+       本文幅1200ではなく、上の記事カラム（860px）に幅を揃える */
+    .p-related__list {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 30px;
+        max-width: 860px;
+        margin-top: 51px;
     }
 }
 
