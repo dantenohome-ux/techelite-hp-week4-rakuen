@@ -1,6 +1,6 @@
 /* =============================================================
    楽園雅苑 / main.js
-   構成：1.SPハンバーガーメニュー
+   構成：1.SPハンバーガーメニュー  2.お部屋のタイプ切り替えタブ
 
    全体を即時関数（IIFE）で包んでいるのは、中で作った変数が
    グローバルに漏れて他のスクリプトとぶつかるのを防ぐため。
@@ -86,9 +86,80 @@
 
 
     /* =============================================================
+       2. お部屋のタイプ切り替えタブ（TOP のみ）
+
+       WAI-ARIA の tabs パターンに合わせている：
+         ・見えているタブは1つだけがフォーカスを受け取る（ローミングtabindex）
+           → Tab キーでタブ列を素通りでき、中身へ早く進める
+         ・左右キーで隣のタブへ、Home/End で端へ移動し、移動先を即表示する
+         ・状態は aria-selected が正。CSS もそれを見て色を変えている
+
+       JS が動かない場合は .is-ready が付かず、
+       CSS 側でタブ列を隠して全パネルを縦に並べたままにする
+       （情報が読めなくなるのを避けるため）。
+       ============================================================= */
+    function initRoomTabs() {
+        var root = document.getElementById('room-tabs');
+        if (!root) return;   // TOP 以外には無い
+
+        var tabs = Array.prototype.slice.call(
+            root.querySelectorAll('[role="tab"]')
+        );
+        if (tabs.length === 0) return;
+
+        function panelOf(tab) {
+            return document.getElementById(tab.getAttribute('aria-controls'));
+        }
+
+        // 表示を1つに絞る。moveFocus は キー操作のときだけ true にして、
+        // クリック時に画面が跳ねないようにする
+        function select(next, moveFocus) {
+            tabs.forEach(function (tab) {
+                var selected = (tab === next);
+                var panel = panelOf(tab);
+
+                tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+                tab.setAttribute('tabindex', selected ? '0' : '-1');
+                if (panel) panel.hidden = !selected;
+            });
+
+            if (moveFocus) next.focus();
+        }
+
+        tabs.forEach(function (tab, index) {
+            tab.addEventListener('click', function () {
+                select(tab, false);
+            });
+
+            tab.addEventListener('keydown', function (event) {
+                var last = tabs.length - 1;
+                var to;
+
+                switch (event.key) {
+                    case 'ArrowLeft':  to = index === 0 ? last : index - 1; break;
+                    case 'ArrowRight': to = index === last ? 0 : index + 1; break;
+                    case 'Home':       to = 0; break;
+                    case 'End':        to = last; break;
+                    default: return;   // それ以外のキーは邪魔しない
+                }
+
+                event.preventDefault();   // 左右キーでの横スクロールを止める
+                select(tabs[to], true);
+            });
+        });
+
+        // ここで初めてタブとして振る舞い始める。
+        // クラスを付けるのが最後なのは、付けた瞬間に CSS が
+        // パネルを隠すため、隠す準備が整ってからにしたいから
+        root.classList.add('is-ready');
+    }
+
+
+    /* =============================================================
        初期化
        defer を付けずに </body> 直前で読み込んでいるので、
        この時点で HTML は読み終わっている
        ============================================================= */
     initHamburger();
+    initRoomTabs();
 })();

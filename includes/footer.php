@@ -30,8 +30,9 @@ $footer_nav = array_merge($global_nav, $content_nav);
 
             <!-- ロゴ（TOPへのリンクを兼ねる） -->
             <a class="l-footer__logo" href="/">
-                <!-- TODO: images/common/logo.svg を配置したら <img> に差し替える -->
-                <span class="l-footer__logo-text">楽園雅苑</span>
+                <!-- 生成りの地に載るので金版。Figma実測 PC 230.24×90 / SP 179.08×70 -->
+                <img class="l-footer__logo-image" src="/images/common/logo.svg"
+                     alt="楽園雅苑" width="230" height="90">
             </a>
 
             <!-- 宿ナビ（お部屋 / プラン / 四季 / アクセス / サービス / ブログ / お知らせ） -->

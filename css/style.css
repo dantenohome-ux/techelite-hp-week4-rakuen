@@ -4,7 +4,8 @@
 
    構成：0.変数  1.リセット  2.土台（body・共通レイアウト）
          3.ヘッダー  4.ハンバーガー／SPドロワー  5.予約ボタン
-         6.フッター  7.ユーティリティ
+         6.フッター  7.繰り返し使うパーツ  8.TOPページ
+         9.ユーティリティ
 
    方針：モバイルファースト。既定を SP（375px）向けに書き、
          @media (min-width: 768px) の中で PC（1440px）向けに上書きする。
@@ -37,6 +38,8 @@
     --color-bg-plan:     #f9f4e2;  /* プランカード背景 */
     --color-bg-gray:     #f3f3f3;  /* 記事カード背景 */
     --color-placeholder: #b5b5b5;  /* ページャーの非選択数字 */
+    --color-tab-off:     #edebd7;  /* 選択されていないタブ（お部屋） */
+    --color-card-rule:   #c9c9c9;  /* プランカードの区切り線 */
     --color-overlay:     rgba(0, 0, 0, .6);  /* 画像の上に重ねる暗幕（ヒーロー等） */
 
     /* SPドロワーの背景。
@@ -47,8 +50,9 @@
     --color-drawer-bg:   #161616;
 
     /* ---- フォント ----
-       本文はゴシック（Noto Sans JP）、見出しは明朝（Noto Serif JP）。
-       和風の世界観は見出しの明朝が担い、本文は読みやすさを優先する */
+       Figma は本文・見出し・ナビ・フッターまで全て Noto Serif JP（明朝）。
+       ゴシックが出てくる箇所は無いので、body の既定を明朝にしている。
+       --font-sans は将来ゴシックを使いたくなったときのために残す */
     --font-sans:  "Noto Sans JP", "Hiragino Sans", "Meiryo", sans-serif;
     --font-serif: "Noto Serif JP", "Yu Mincho", "游明朝", serif;
 
@@ -79,6 +83,17 @@
 *::before,
 *::after {
     box-sizing: border-box;
+
+    /* 字間はサイト全体で 0.3em（Figma 指定）。
+       em はその要素自身の font-size を基準に計算されるが、
+       body にだけ書くと「16px の 0.3em ＝ 4.8px」という
+       計算済みの値が全要素に継承されてしまい、34px の見出しでも
+       4.8px のままになる。文字サイズごとに正しく計算させるため
+       全要素に指定する。
+
+       ボタンなどのフォーム部品はブラウザ既定で letter-spacing:normal が
+       当たり継承を受け付けないので、その打ち消しも兼ねている */
+    letter-spacing: var(--letter-spacing);
 }
 
 body,
@@ -136,13 +151,10 @@ hr {
 body {
     background-color: var(--color-bg);
     color: var(--color-text);
-    font-family: var(--font-sans);
+    font-family: var(--font-serif);
     font-size: 16px;
     font-weight: 400;
     line-height: 1.75;
-
-    /* 字間はサイト全体で 0.3em 固定。例外だけ個別に打ち消す方針 */
-    letter-spacing: var(--letter-spacing);
 }
 
 /* ハンバーガーを開いている間、背面のページがスクロールしないようにする
@@ -209,11 +221,10 @@ body.is-nav-open {
     color: var(--color-white);
 }
 
-/* TODO: ロゴ画像（SVG）を配置したら、このテキスト用スタイルは削除してよい */
-.l-header__logo-text {
-    display: block;
-    font-size: 20px;
-    line-height: 1.4;
+/* Figma実測：SP 102.33×40 / PC 150×58.63。
+   高さは幅なりに決まるので width だけ指定する */
+.l-header__logo-image {
+    width: 102px;
 }
 
 
@@ -379,6 +390,13 @@ body.is-nav-open {
     margin-top: var(--space-md);
 }
 
+/* プランカードの中の予約ボタン。
+   カードの内寸いっぱい（SP 271 / PC 300）× 高さ40 */
+.c-btn-reserve--card {
+    width: 100%;
+    height: 40px;
+}
+
 
 /* =============================================================
    6. フッター
@@ -402,11 +420,9 @@ body.is-nav-open {
     margin-bottom: 48px;
 }
 
-/* TODO: ロゴ画像（SVG）を配置したら、このテキスト用スタイルは削除してよい */
-.l-footer__logo-text {
-    font-size: 24px;
-    line-height: 1.4;
-    text-indent: var(--letter-spacing);
+/* Figma実測：SP 179.08×70 / PC 230.24×90 */
+.l-footer__logo-image {
+    width: 179px;
 }
 
 .l-footer__menu {
@@ -481,49 +497,792 @@ body.is-nav-open {
 
 
 /* =============================================================
-   7. 仮ページ用（動作確認のための最小限）
-   TODO: 各ページの本実装を入れる際に、ここは差し替えて削除する
+   7. 繰り返し使うパーツ
+
+   TOP で2回以上出てくる見た目をここにまとめる。
+   「同じ見た目は同じクラス」にするため、ページ側（8節）からは
+   位置と余白だけを与え、パーツ自体の見た目はここで完結させる。
+
+   寸法・字送りはすべて Figma の実測値。
+   letter-spacing は body で 0.3em を効かせているので個別指定しない。
    ============================================================= */
 
-/* ヒーロー。TOP は透過ヘッダーなので、ヘッダーの高さぶん上に余白を取り、
-   文字がヘッダーの下に潜り込まないようにする */
-.p-hero {
+/* -------------------------------------------------------------
+   7-1. セクション見出し `.c-section-title`
+   「和文 ＋ 縦罫線 ＋ 欧文」の横並び。間隔は左右とも 32px。
+   Figma: 和文 SP22/PC28・欧文 SP16/PC20（EB Garamond）
+   ------------------------------------------------------------- */
+.c-section-title {
     display: flex;
     align-items: center;
-    min-height: 60vh;
-    padding-top: var(--header-height);
-    background-color: var(--color-text);
+    gap: 32px;
+}
+
+.c-section-title__ja {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    line-height: 40px;
+}
+
+/* 縦の細い罫線。飾りなので aria-hidden を付けた span を伸ばして描く */
+.c-section-title__line {
+    flex: none;
+    width: 1px;
+    height: 30px;
+    background-color: currentColor;
+}
+
+/* 欧文ラベルは EB Garamond。未読込のときは明朝にフォールバックさせる */
+.c-section-title__en {
+    font-family: "EB Garamond", var(--font-serif);
+    font-size: 16px;
+    line-height: 40px;
+}
+
+/* 注：お部屋セクションは全面に写真が敷かれるが、その写真は
+   平均輝度 235/255 の明るいテクスチャで、Figma でも文字色は
+   #383838 のまま。白抜きの modifier は用意しない */
+
+
+/* -------------------------------------------------------------
+   7-2. 一覧へ誘導するボタン `.c-btn-more`
+   白地＋金枠＋金文字＋右端の矢印。角丸なし。
+   Figma: SP 335×60 / PC 380×60、矢印は右端から SP20 / PC32
+   ------------------------------------------------------------- */
+.c-btn-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    max-width: 335px;
+    height: 60px;
+    border: 1px solid var(--color-main);
+    background-color: var(--color-white);
+    color: var(--color-main);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 40px;
+    transition: background-color .3s ease, color .3s ease;
+}
+
+.c-btn-more:hover,
+.c-btn-more:focus-visible {
+    background-color: var(--color-main);
     color: var(--color-white);
+}
+
+/* 字間の分だけ右にずれて見えるので、最後の一文字ぶん戻す */
+.c-btn-more__label {
+    text-indent: var(--letter-spacing);
+}
+
+/* 矢印は SVG。stroke に currentColor を使っているので、
+   ホバーで文字色が変わると矢印も一緒に変わる */
+.c-btn-more__arrow {
+    position: absolute;
+    right: 20px;
+    width: 20px;
+    height: 6px;
+}
+
+
+/* -------------------------------------------------------------
+   7-3. プランカード `.c-card-plan`
+   Figma: SP 335×323 / PC 380×368、背景 #f9f4e2
+   ------------------------------------------------------------- */
+.c-card-plan {
+    display: flex;
+    flex-direction: column;
+    padding: 32px;
+    background-color: var(--color-bg-plan);
+    text-align: center;
+
+    /* グリッドの子は既定が min-width:auto ＝「中身の最小幅までは縮まない」。
+       仕様行を折り返し禁止にしているため、その最小幅までトラックが広がり、
+       3列の合計が本文幅を超えてはみ出す。0 にして 1fr の指定どおりに収める */
+    min-width: 0;
+}
+
+.c-card-plan__title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+}
+
+.c-card-plan__sub {
+    display: block;
+}
+
+/* タイトルと仕様の間の区切り線。
+   カード幅から左右の余白を引いた幅（SP 271 / PC 300）いっぱいに引く */
+.c-card-plan__spec {
+    width: 100%;
+    margin-top: 13px;
+    padding-top: 28px;
+    border-top: 1px solid var(--color-card-rule);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 40px;
+    text-align: left;
+
+    /* 仕様とボタンの間隔（Figma実測 SP2px / PC10px）。
+       ボタン側は margin-top:auto なので、ここで最低限の間隔を確保しておくと
+       カードの高さが揃ったときも Figma どおりの位置に来る */
+    margin-bottom: 2px;
+}
+
+/* 「項目 : 値」を Figma と同じく1本の文字列として流す。
+   flex にすると dt と dd が別々の箱になり、幅がぎりぎりのときに
+   値だけが次行へ落ちてしまうため、inline に戻している。
+
+   右の負のマージンは行末の字間ぶん。letter-spacing は最後の
+   一文字の「後ろ」にも入るので、そのままだと 1200px 設計の
+   カード（内寸300px）に収まる文字列が、スクロールバーで
+   数px狭まっただけで折り返してしまう */
+.c-card-plan__spec-row {
+    margin-right: calc(var(--letter-spacing) * -1);
+
+    /* 折り返さない。
+       「一泊の値段 : 30,000円/1部屋」は Figma のカード内寸（SP 271 / PC 300）に
+       対して数px足りず、放っておくと値段だけが次行へ落ちてカードが
+       40px以上高くなる。はみ出すのは左右32〜40pxの余白の内側なので
+       見た目には影響しない */
+    white-space: nowrap;
+}
+
+.c-card-plan__spec-row dt,
+.c-card-plan__spec-row dd {
+    display: inline;
+}
+
+/* 区切りの「 : 」は文章ではなく体裁なので CSS で描く
+   （読み上げに「コロン」と入るのを避ける） */
+.c-card-plan__spec-row dt::after {
+    content: " : ";
+    white-space: pre;
+}
+
+/* 項目名は途中で折り返させない */
+.c-card-plan__spec-row dt {
+    white-space: nowrap;
+}
+
+.c-card-plan__spec-row dd {
+    margin-left: 0;
+}
+
+/* カード内の予約ボタンは上に伸びた余白を吸収して最下部に置く */
+.c-card-plan .c-btn-reserve--card {
+    margin-top: auto;
+}
+
+
+/* -------------------------------------------------------------
+   7-4. 記事カード `.c-card-article`
+   TOP の新着ブログとブログ一覧で共用する。
+   Figma: SP 335×350（サムネ335×200・余白20）
+          PC 380×398（サムネ380×230・余白24）
+   ------------------------------------------------------------- */
+.c-card-article {
+    background-color: var(--color-bg-gray);
+}
+
+/* カード全体をリンクにする。ブロック要素にして面で押せるようにする */
+.c-card-article__link {
+    display: block;
+    height: 100%;
+}
+
+.c-card-article__thumb {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    transition: opacity .3s ease;
+}
+
+.c-card-article__link:hover .c-card-article__thumb,
+.c-card-article__link:focus-visible .c-card-article__thumb {
+    opacity: .8;
+}
+
+.c-card-article__body {
+    padding: 20px;
+}
+
+.c-card-article__date {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 28px;
+}
+
+.c-card-article__title {
+    /* Figma は2行想定。3行以上になっても崩れないよう行数で切る */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    margin-top: 2px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 26px;
+}
+
+/* カテゴリの札。幅は文字数なりに決まる（Figma も3文字/2文字で幅が違う） */
+.c-card-article__tag {
+    display: inline-block;
+    margin-top: 4px;
+    padding-inline: 16px;
+
+    /* 字間は最後の一文字の「後ろ」にも入る。Figma のタグ幅
+       （3文字83px / 2文字65px）は行末の字間を含まない値なので、
+       その分だけ右の余白を詰めて幅を合わせる */
+    padding-right: calc(16px - var(--letter-spacing));
+    border-radius: 13px;
+    background-color: var(--color-main);
+    color: var(--color-white);
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 25px;
+}
+
+
+/* -------------------------------------------------------------
+   7-5. お知らせの1行 `.c-list-news`
+   カードではなく罫線区切りのリスト。
+   Figma: SP 行113px / PC 行110px、上下に1pxの罫線
+   ------------------------------------------------------------- */
+.c-list-news {
+    border-top: 1px solid var(--color-border);
+}
+
+/* 最終行だけ下にも罫線を引く（行と行の間は1本で足りるため） */
+.c-list-news:last-child {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.c-list-news__link {
+    display: grid;
+    /* 左に日付とタイトル、右に丸ボタン */
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 0 16px;
+    padding-block: 16px;
+}
+
+.c-list-news__date {
+    grid-column: 1;
+    font-family: var(--font-serif);
+    font-size: 12px;
+    line-height: 28px;
+}
+
+.c-list-news__title {
+    grid-column: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 26px;
+}
+
+/* 金の丸に白いシェブロン。2行ぶんの高さの中央に置く */
+.c-list-news__arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--color-main);
+    color: var(--color-white);
+    transition: opacity .3s ease;
+}
+
+.c-list-news__arrow svg {
+    width: 8px;
+    height: 10px;
+}
+
+.c-list-news__link:hover .c-list-news__arrow,
+.c-list-news__link:focus-visible .c-list-news__arrow {
+    opacity: .7;
+}
+
+
+/* =============================================================
+   8. TOP ページ
+
+   Figma: PC `1:2`（1440×10705）/ SP `17:2`（375×8190）
+   セクションの上下余白は Figma の実測から次の2値に整理できた：
+     SP … 上 60px / 下 52px
+     PC … 上 210px / 下 200px
+   個別に違う箇所だけ、そのセクションで上書きしている。
+   ============================================================= */
+
+/* -------------------------------------------------------------
+   8-1. ヒーロー
+   写真の上に暗幕を敷き、その上に白文字を左下寄せで置く
+   ------------------------------------------------------------- */
+.p-hero {
+    position: relative;
+    height: 380px;
+    overflow: hidden;
+}
+
+.p-hero__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 暗幕。写真の明るさに関係なく白文字が読めるようにする。
+
+   .p-hero（画面いっぱい）に付ける点が重要。内側の .l-inner は
+   最大1440pxで頭打ちになるため、そちらに付けると 1440px より広い画面で
+   左右の端だけ暗幕がかからず、縦の境目が出てしまう。
+
+   Figma の指定は mix-blend-mode:multiply だが、乗算する色が純黒のときは
+   通常合成と結果が一致する（どちらも元の40%）。実際に Figma の
+   暗幕込み書き出しと比べても平均輝度 26.4 対 26.6 でほぼ同じだったので、
+   合成モードは付けず、余計な重ね合わせ文脈を作らないようにしている */
+.p-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-color: var(--color-overlay);
+}
+
+/* 文字は写真より前に出す。位置は「下端から測る」ほうが
+   高さが変わってもデザインの見た目に近い */
+.p-hero__inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: relative;
+    height: 100%;
+    padding-bottom: 20px;
+    color: var(--color-white);
+}
+
+/* 暗幕（.p-hero::after）は DOM 上いちばん後ろにあるため、
+   そのままだと文字の上に重なる。文字側を一段上に出しておく */
+.p-hero__inner,
+.p-hero__scroll {
+    z-index: 2;
+}
+
+/* Honoka Mincho は Google Fonts に無いため、
+   端末に入っていなければ Noto Serif JP で代替される */
+.p-hero__catch {
+    font-family: "Honoka Mincho", var(--font-serif);
+    font-size: 24px;
+    line-height: 36px;
+}
+
+.p-hero__lead {
+    margin-top: 16px;
+    font-family: "Honoka Mincho", var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+}
+
+/* 縦組みの「SCROOLL」＋縦線。Figma では PC のみ */
+.p-hero__scroll {
+    display: none;
+}
+
+
+/* -------------------------------------------------------------
+   8-2. コンセプト
+   ロゴ＋短い文と、大小2枚の組み写真
+   ------------------------------------------------------------- */
+.p-concept {
+    padding-block: 52px 80px;
+}
+
+.p-concept__logo {
+    width: 179px;
+    height: auto;
+    margin-inline: auto;
+}
+
+.p-concept__text {
+    margin-top: 40px;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 32px;
     text-align: center;
 }
 
-.p-hero__catch {
-    font-size: 24px;
-    font-weight: 400;
-    line-height: 2;
+/* 大きい写真の左下に小さい写真を重ねる。
+   位置は Figma の座標を本文幅（SP 335 / PC 610）に対する％にした */
+.p-concept__images {
+    position: relative;
+    margin-top: 33px;
+    padding-bottom: 28px;   /* 重ねた小さい写真のはみ出しぶん */
 }
 
+.p-concept__image--large {
+    width: 83%;
+    margin-left: 17%;
+}
+
+.p-concept__image--small {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 34%;
+}
+
+
+/* -------------------------------------------------------------
+   8-3. お部屋
+   背景いっぱいに和紙のような明るいテクスチャを敷く。
+   （平均輝度 235/255 なので文字色は既定の #383838 のまま）
+   ------------------------------------------------------------- */
+.p-room {
+    position: relative;
+    padding-block: 60px 52px;
+    background-image: url("/images/top/room-bg.jpg");
+    background-position: center top;
+    background-size: cover;
+}
+
+.p-room__lead {
+    margin-top: 20px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+    text-align: justify;
+}
+
+.p-room__tabs {
+    margin-top: 40px;
+}
+
+/* SP は縦積み、PC は3列。タブ自体の見た目は下の .p-room__tab */
+.p-room__tablist {
+    display: grid;
+    gap: 20px;
+}
+
+.p-room__tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 76px;
+    background-color: var(--color-tab-off);
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+    text-align: center;
+    transition: background-color .3s ease, color .3s ease;
+}
+
+/* 選択中のタブ。aria-selected を見た目の根拠にしておくと、
+   クラスと状態がずれない */
+.p-room__tab[aria-selected="true"] {
+    background-color: var(--color-main);
+    color: var(--color-white);
+}
+
+.p-room__panel {
+    margin-top: 40px;
+}
+
+/* JS が動かないときは全パネルを見せる。
+   main.js が .is-ready を付けてから hidden が効き始める */
+.p-room__tabs:not(.is-ready) .p-room__panel[hidden] {
+    display: block;
+}
+
+/* JS 無効時はタブが機能しないので、押せそうな見た目をやめる */
+.p-room__tabs:not(.is-ready) .p-room__tablist {
+    display: none;
+}
+
+.p-room__photo {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+}
+
+/* 写真のすぐ下に白い解説パネルを置く */
+.p-room__detail {
+    padding: 24px;
+    background-color: var(--color-white);
+}
+
+.p-room__detail-title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 28px;
+}
+
+.p-room__detail-text {
+    margin-top: 8px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 30px;
+}
+
+/* 装飾の線画。SP では本文に重ならないよう見出しの右に小さく置く */
+.p-room__illust {
+    position: absolute;
+    top: 20px;
+    right: 12px;
+    width: 113px;
+    height: auto;
+}
+
+
+/* -------------------------------------------------------------
+   8-4. プラン
+   ------------------------------------------------------------- */
+.p-plan {
+    position: relative;
+    padding-block: 60px 52px;
+}
+
+.p-plan__illust {
+    position: absolute;
+    top: 20px;
+    right: 12px;
+    width: 112px;
+    height: auto;
+}
+
+.p-plan__list {
+    display: grid;
+    gap: 32px;
+    margin-top: 24px;
+}
+
+
+/* -------------------------------------------------------------
+   8-5. 四季
+   組み写真＋左右にはみ出す帯
+   ------------------------------------------------------------- */
+.p-seasons {
+    padding-block: 60px 52px;
+    background-color: var(--color-bg-plan);
+}
+
+.p-seasons__lead {
+    margin-top: 20px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+}
+
+/* 写真とイラストを重ねた飾り。
+
+   位置・大きさをすべて枠に対する％で指定し、枠自体は aspect-ratio で
+   縦横比を保つ。こうすると画面幅が変わっても組み写真が丸ごと
+   拡大縮小され、写真どうしの位置関係が崩れない。
+
+   幅だけ％で縦位置を px にすると、Figma の基準幅（SP375 / PC1440）より
+   広い画面で写真だけが伸びて下の写真に重なるので、必ず両方を％にする。
+   ％の値は Figma 実測（SP は 375×266 の枠）を割った値 */
+.p-seasons__photos {
+    position: relative;
+    aspect-ratio: 375 / 266;
+    margin-top: 40px;
+}
+
+.p-seasons__photos > * {
+    position: absolute;
+}
+
+.p-seasons__photo--large {
+    left: 0;
+    top: 0;
+    width: 73.6%;    /* 276 / 375 */
+}
+
+.p-seasons__illust--01 {
+    left: 69.07%;    /* 259 / 375 */
+    top: 11.28%;     /*  30 / 266 */
+    width: 18.13%;   /*  68 / 375 */
+}
+
+/* 3枚目の添え写真。
+   Figma では SP フレームにしか置かれていないが、PC にも出す方針。
+   枠に対する％で置いているので、同じ値が SP・PC 双方で通用する
+   （SP 375×266 なら 62×80 ／ PC 1440×954 なら 238×307 相当）*/
+.p-seasons__photo--small {
+    left: 78.13%;    /* 293 / 375 */
+    top: 34.59%;     /*  92 / 266 */
+    width: 16.53%;   /*  62 / 375 */
+}
+
+.p-seasons__photo--mid {
+    left: 15.47%;    /*  58 / 375 */
+    top: 61.65%;     /* 164 / 266 */
+    width: 46.93%;   /* 176 / 375 */
+}
+
+.p-seasons__illust--02 {
+    left: 5.33%;     /*  20 / 375 */
+    top: 82.33%;     /* 219 / 266 */
+    width: 12.53%;   /*  47 / 375 */
+}
+
+/* 横一列の帯。中身の合計幅が画面より広いので、
+   中央寄せにすると左右へ均等にはみ出す。親で切り取る */
+.p-seasons__strip {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+    overflow: hidden;
+}
+
+.p-seasons__strip-item {
+    flex: none;
+    width: 125px;
+    height: 90px;
+    object-fit: cover;
+}
+
+.p-seasons__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+
+/* -------------------------------------------------------------
+   8-6. アクセス
+   ------------------------------------------------------------- */
+.p-access {
+    padding-block: 60px 52px;
+}
+
+/* 地図は画面幅いっぱい。左右の余白を打ち消す */
+.p-access__map {
+    width: 100%;
+    height: 310px;
+    margin-top: 20px;
+    object-fit: cover;
+}
+
+.p-access__head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 40px;
+}
+
+.p-access__logo {
+    width: 169px;
+    height: auto;
+}
+
+.p-access__address {
+    margin-top: 32px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 30px;
+    text-align: center;
+}
+
+/* 住所（2行）の下は 12px。
+   Figma の y 座標は文字の上下をトリミングした値なので、
+   行ボックスの実寸（2行×30＝60px）との差 20px を引いてある。
+   上のロゴは画像でトリミングの影響を受けないため、住所側は 32px のまま。
+   PC は住所が1行かつロゴと横並びなので、PC 用の指定で上書きする */
+.p-access__text {
+    margin-top: 12px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 30px;
+}
+
+/* SP は文と文の間を1行ぶん空ける（Figma 準拠） */
+.p-access__text p + p {
+    margin-top: 30px;
+}
+
+
+/* -------------------------------------------------------------
+   8-7. ブログ
+   ------------------------------------------------------------- */
+.p-blog {
+    padding-block: 60px 52px;
+    background-color: var(--color-bg-gray);
+}
+
+.p-blog__list {
+    display: grid;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.p-blog__action,
+.p-news__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 28px;
+}
+
+
+/* -------------------------------------------------------------
+   8-8. お知らせ
+   ------------------------------------------------------------- */
+.p-news {
+    padding-block: 60px 52px;
+}
+
+.p-news__list {
+    margin-top: 24px;
+}
+
+
+/* =============================================================
+   8-9. 仮ページ用（暫定）
+
+   service.php がまだ動作確認用の仮ページなので、
+   最低限の余白だけ残している。
+   TODO: PR3（運営会社・サービス）で本実装したら、この節ごと削除する
+   ============================================================= */
 .p-section {
-    padding-block: 48px;
+    padding-block: 60px;
 }
 
-.p-section h1,
-.p-section h2 {
+.p-section h1 {
     margin-bottom: var(--space-sm);
     font-size: 22px;
-    font-weight: 400;
     line-height: 40px;
 }
 
 
 /* =============================================================
-   8. ユーティリティ
+   9. ユーティリティ
    ============================================================= */
 
 /* 本文（ゴシック）の中で、明朝にしたい短いテキストに付ける。
    見出し以外の欧文ラベル（menu / © RAKUGAEN. など）で使う */
 .u-serif {
     font-family: var(--font-serif);
+}
+
+/* SP だけで改行したい箇所に付ける。
+   PC では改行せず1行に流す（ヒーローのキャッチなど）。
+   要素セレクタ（.foo br）で br を触ると詳細度で勝ってしまい
+   この指定が効かなくなるので、br への指定はここに集約する */
+.u-br-sp {
+    display: inline;
 }
 
 /* 画面には出さず、支援技術にだけ読ませたいテキスト */
@@ -552,8 +1311,8 @@ body.is-nav-open {
     }
 
     /* ---- ヘッダー ---- */
-    .l-header__logo-text {
-        font-size: 28px;
+    .l-header__logo-image {
+        width: 150px;
     }
 
     /* ドロワーをやめて、ただの横並びメニューに戻す */
@@ -619,6 +1378,10 @@ body.is-nav-open {
         margin-bottom: var(--space-xl);
     }
 
+    .l-footer__logo-image {
+        width: 230px;
+    }
+
     /* 宿ナビ7項目を横一列に。狭い画面では折り返す */
     .l-footer__menu {
         flex-direction: row;
@@ -653,18 +1416,414 @@ body.is-nav-open {
         margin-top: 60px;
     }
 
-    /* ---- 仮ページ ---- */
+    /* ---- 共通パーツ ---- */
+
+    .c-section-title__ja {
+        font-size: 28px;
+    }
+
+    .c-section-title__line {
+        height: 40px;
+    }
+
+    .c-section-title__en {
+        font-size: 20px;
+    }
+
+    .c-btn-more {
+        max-width: 380px;
+        font-size: 18px;
+    }
+
+    .c-btn-more__arrow {
+        right: 32px;
+    }
+
+    /* Figma実測：カード 380×368、内側の余白は四辺とも40px */
+    .c-card-plan {
+        padding: 40px;
+    }
+
+    .c-card-plan__title {
+        font-size: 22px;
+        line-height: 32px;
+    }
+
+    .c-card-plan__spec {
+        margin-top: 16px;
+        margin-bottom: 10px;
+        padding-top: 32px;
+        font-size: 15px;
+        line-height: 42px;
+    }
+
+
+    /* PC だけ行頭に中黒が付く（SP の Figma には無い） */
+    .c-card-plan__spec-row dt::before {
+        content: "・";
+    }
+
+    .c-card-article__thumb {
+        height: 230px;
+    }
+
+    .c-card-article__body {
+        padding: 24px;
+    }
+
+    .c-card-article__date {
+        font-size: 14px;
+    }
+
+    .c-card-article__title {
+        font-size: 16px;
+        line-height: 28px;
+    }
+
+    .c-card-article__tag {
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 26px;
+    }
+
+    /* Figma実測：行の高さ 110px。日付と見出しで 56px ぶんなので上下 27px */
+    .c-list-news__link {
+        padding-block: 27px;
+        gap: 0 24px;
+    }
+
+    .c-list-news__date {
+        font-size: 14px;
+    }
+
+    .c-list-news__title {
+        font-size: 16px;
+        line-height: 28px;
+    }
+
+    .c-list-news__arrow {
+        width: 40px;
+        height: 40px;
+    }
+
+    .c-list-news__arrow svg {
+        width: 12px;
+        height: 14px;
+    }
+
+
+    /* ---- 8-1. ヒーロー ---- */
+
+    .p-hero {
+        height: 900px;
+    }
+
+    .p-hero__inner {
+        padding-bottom: 80px;
+    }
+
     .p-hero__catch {
         font-size: 34px;
+        line-height: 48px;
     }
 
-    .p-section {
-        padding-block: var(--space-xl);
+    .p-hero__lead {
+        margin-top: 24px;
+        font-size: 24px;
+        line-height: 40px;
     }
 
-    .p-section h1,
-    .p-section h2 {
-        font-size: 28px;
+    /* 縦組みの「SCROOLL」と、その下の縦線。
+       Figma実測：右端から100px、下端から80px、線は 1×154 */
+    .p-hero__scroll {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        position: absolute;
+        right: 100px;
+        bottom: 80px;
+        color: var(--color-white);
+    }
+
+    .p-hero__scroll-text {
+        font-family: "EB Garamond", var(--font-serif);
+        font-size: 14px;
+        line-height: 1;
+        writing-mode: vertical-rl;
+    }
+
+    /* 線は要素そのものではなく、擬似要素で描く */
+    .p-hero__scroll::after {
+        content: "";
+        width: 1px;
+        height: 154px;
+        background-color: currentColor;
+    }
+
+
+    /* ---- 8-2. コンセプト ---- */
+
+    .p-concept {
+        padding-block: 200px;
+    }
+
+    /* 左に文、右に組み写真。右カラムは写真の実寸（610px）で固定する */
+    .p-concept__inner {
+        display: grid;
+        grid-template-columns: 1fr 610px;
+        gap: 90px;
+        align-items: start;
+    }
+
+    .p-concept__body {
+        padding-top: 70px;
+    }
+
+    .p-concept__logo {
+        width: 260px;
+        margin-inline: 0;
+    }
+
+    .p-concept__text {
+        margin-top: 80px;
+        font-size: 22px;
+        line-height: 46px;
+        text-align: left;
+    }
+
+    .p-concept__images {
+        position: relative;
+        margin-top: 0;
+        padding-bottom: 60px;   /* 小さい写真が下にはみ出すぶん */
+    }
+
+    .p-concept__image--large {
+        width: 610px;
+        height: 460px;
+        margin-left: 0;
+        object-fit: cover;
+    }
+
+    /* 大きい写真の左辺をまたいで重なる（Figma実測 x=585 / y=+270） */
+    .p-concept__image--small {
+        left: -125px;
+        top: 270px;
+        bottom: auto;
+        width: 250px;
+        height: 250px;
+        object-fit: cover;
+    }
+
+
+    /* ---- 8-3. お部屋 ---- */
+
+    .p-room {
+        padding-block: 211px 200px;
+    }
+
+    .p-room__lead {
+        margin-top: 68px;
+        font-size: 18px;
+        line-height: 34px;
+        text-align: left;
+    }
+
+    .p-room__tabs {
+        margin-top: 80px;
+    }
+
+    /* Figma実測：380×80 を 30px 間隔で3列 */
+    .p-room__tablist {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
+    .p-room__tab {
+        height: 80px;
+        line-height: 27px;
+    }
+
+    .p-room__panel {
+        margin-top: 32px;
+    }
+
+    .p-room__photo {
+        height: 650px;
+    }
+
+    /* 写真の直下に密着させる（Figma でも隙間なし） */
+    .p-room__detail {
+        padding: 40px 40px 40px;
+    }
+
+    .p-room__detail-title {
+        font-size: 23px;
+        line-height: 27px;
+    }
+
+    .p-room__detail-text {
+        margin-top: 18px;
+        font-size: 16px;
+        line-height: 32px;
+    }
+
+    .p-room__illust {
+        top: 100px;
+        right: 90px;
+        width: 241px;
+    }
+
+
+    /* ---- 8-4. プラン ---- */
+
+    .p-plan {
+        padding-block: 211px 200px;
+    }
+
+    .p-plan__illust {
+        top: 100px;
+        right: 90px;
+        width: 235px;
+    }
+
+    /* Figma実測：380×368 を 30px 間隔で3列 */
+    .p-plan__list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        margin-top: 68px;
+    }
+
+
+    /* ---- 8-5. 四季 ---- */
+
+    .p-seasons {
+        padding-block: 211px 200px;
+    }
+
+    .p-seasons__lead {
+        margin-top: 68px;
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    /* 組み写真。PC では大きい写真が画面左端まで届く。
+       ％の値は Figma 実測（1440×954 の枠）を割った値 */
+    .p-seasons__photos {
+        aspect-ratio: 1440 / 954;
+        margin-top: 80px;
+    }
+
+    .p-seasons__photo--large {
+        width: 70.83%;   /* 1020 / 1440 */
+    }
+
+    .p-seasons__illust--01 {
+        left: 67.01%;    /*  965 / 1440 */
+        top: 11.53%;     /*  110 /  954 */
+        width: 14.65%;   /*  211 / 1440 */
+    }
+
+    .p-seasons__photo--mid {
+        left: 18.19%;    /*  262 / 1440 */
+        top: 64.57%;     /*  616 /  954 */
+        width: 40.69%;   /*  586 / 1440 */
+    }
+
+    .p-seasons__illust--02 {
+        left: 9.44%;     /*  136 / 1440 */
+        top: 83.86%;     /*  800 /  954 */
+        width: 10.76%;   /*  155 / 1440 */
+    }
+
+    /* Figma実測：340×244 を 28px 間隔で5枚 */
+    .p-seasons__strip {
+        gap: 28px;
+        margin-top: 64px;
+    }
+
+    .p-seasons__strip-item {
+        width: 340px;
+        height: 244px;
+    }
+
+    .p-seasons__action {
+        margin-top: 60px;
+    }
+
+
+    /* ---- 8-6. アクセス ---- */
+
+    .p-access {
+        padding-block: 211px 200px;
+    }
+
+    .p-access__map {
+        height: 600px;
+        margin-top: 68px;
+    }
+
+    /* ロゴと住所を横並びにする（Figma実測 間隔120px） */
+    .p-access__head {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 120px;
+        margin-top: 80px;
+    }
+
+    .p-access__address {
+        margin-top: 0;
+        font-size: 16px;
+        line-height: 42px;
+    }
+
+    .p-access__text {
+        margin-top: 60px;
+        font-size: 16px;
+        line-height: 32px;
+        text-align: center;
+    }
+
+    /* PC は空行を入れず3行続けて組む（Figma 準拠） */
+    .p-access__text p + p {
+        margin-top: 0;
+    }
+
+
+    /* ---- 8-7. ブログ ---- */
+
+    .p-blog {
+        padding-block: 211px 200px;
+    }
+
+    /* Figma実測：380×398 を 30px 間隔で3列 */
+    .p-blog__list {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        margin-top: 68px;
+    }
+
+    .p-blog__action,
+    .p-news__action {
+        margin-top: 60px;
+    }
+
+
+    /* PC では SP 用の改行をやめる */
+    .u-br-sp {
+        display: none;
+    }
+
+
+    /* ---- 8-8. お知らせ ---- */
+
+    .p-news {
+        padding-block: 211px 200px;
+    }
+
+    .p-news__list {
+        margin-top: 68px;
     }
 }
 
