@@ -133,8 +133,9 @@ $reserve_nav = [
 
             <!-- ロゴが TOP へのリンクを兼ねる（ヘッダーに「TOP」の文字リンクは置かない） -->
             <a class="l-header__logo" href="/">
-                <!-- TODO: images/common/logo.svg を配置したら <img> に差し替える -->
-                <span class="l-header__logo-text">楽園雅苑</span>
+                <!-- 濃色のヘッダーに載るので白版。Figma実測 PC 150×58.63 / SP 102.33×40 -->
+                <img class="l-header__logo-image" src="/images/common/logo-white.svg"
+                     alt="楽園雅苑" width="150" height="59">
             </a>
 
             <!-- SP ではこの nav 全体が全画面ドロワーになる（開閉は js/main.js が制御） -->
