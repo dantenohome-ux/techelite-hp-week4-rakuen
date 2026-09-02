@@ -94,14 +94,15 @@ $dining_hours = [
 
                 <p class="p-service__text">「楽園雅苑 - 桜庭温泉の隠れ家 -」では、自然の恵みに満ちた温泉を誇ります。当館の温泉は、大自然の地下深くから湧き出る温泉源を利用し、厳選された泉質が心と体を癒やします。その美しい湯色と温かさは、まるで天然の温もりを感じるかのよう。疲れた心と体を癒し、日々の喧騒から解放される贅沢な時間を提供します。楽園雅苑の温泉で、極上の癒しとリフレッシュをご体験ください。</p>
 
-                <!-- この2枚は Figma の SP フレームにのみ置かれている。
-                     PC は同じ位置が約490pxの空白になっており、そのまま余白として
-                     再現する方針のため、PC では CSS で非表示にしている -->
-                <ul class="c-photo-grid c-photo-grid--2 p-service__photos--sponly">
+                <!-- この2枚は Figma の SP フレームにのみ置かれており、
+                     PC フレームは同じ位置が約490pxの空白になっている。
+                     空白のままでは温泉の様子が伝わらないため、PC でも表示している
+                     （寸法は同ページのレストラン等と同じ 580×370） -->
+                <ul class="c-photo-grid c-photo-grid--2 p-service__photos--onsen">
                     <?php foreach ($onsen_photos as $p): ?>
                         <li>
                             <img src="/images/service/<?php echo h($p['file']); ?>.jpg"
-                                 alt="<?php echo h($p['alt']); ?>" width="335" height="214" loading="lazy">
+                                 alt="<?php echo h($p['alt']); ?>" width="580" height="370" loading="lazy">
                         </li>
                     <?php endforeach; ?>
                 </ul>

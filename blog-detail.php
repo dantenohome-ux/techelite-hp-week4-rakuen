@@ -174,18 +174,12 @@ for ($i = 0; $i < 2; $i++) {
                 <h2 class="p-related__title">こんな記事も読まれています</h2>
 
                 <ul class="p-related__list">
-                    <?php foreach ($related as $post): ?>
-                        <li class="c-card-article c-card-article--wide">
-                            <a class="c-card-article__link" href="/blog-detail.php">
-                                <img class="c-card-article__thumb" src="/images/top/blog-thumb.jpg"
-                                     alt="" width="415" height="250" loading="lazy">
-                                <div class="c-card-article__body">
-                                    <time class="c-card-article__date"><?php echo h($post['date']); ?></time>
-                                    <h3 class="c-card-article__title"><?php echo h($post['title']); ?></h3>
-                                    <span class="c-card-article__tag"><?php echo h($post['category']); ?></span>
-                                </div>
-                            </a>
-                        </li>
+                    <?php foreach ($related as $card): ?>
+                        <?php
+                        // 関連記事は横長。セクション見出し h2 の下なので見出しは h3（既定）
+                        $card['variant'] = 'wide';
+                        require __DIR__ . '/includes/card-article.php';
+                        ?>
                     <?php endforeach; ?>
                 </ul>
             </div>

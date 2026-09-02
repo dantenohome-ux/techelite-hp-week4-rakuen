@@ -84,19 +84,12 @@ $current_page  = 1;
                 </nav>
 
                 <ul class="p-blog-list__grid">
-                    <?php foreach ($posts as $post): ?>
-                        <li class="c-card-article">
-                            <!-- TODO: 記事ごとの URL（/blog-detail.php?slug=…）にする -->
-                            <a class="c-card-article__link" href="/blog-detail.php">
-                                <img class="c-card-article__thumb" src="/images/top/blog-thumb.jpg"
-                                     alt="" width="380" height="230" loading="lazy">
-                                <div class="c-card-article__body">
-                                    <time class="c-card-article__date"><?php echo h($post['date']); ?></time>
-                                    <h2 class="c-card-article__title"><?php echo h($post['title']); ?></h2>
-                                    <span class="c-card-article__tag"><?php echo h($post['category']); ?></span>
-                                </div>
-                            </a>
-                        </li>
+                    <?php foreach ($posts as $card): ?>
+                        <?php
+                        // h1「ブログ」の直下に並ぶカードなので、見出しは h2
+                        $card['heading'] = 'h2';
+                        require __DIR__ . '/includes/card-article.php';
+                        ?>
                     <?php endforeach; ?>
                 </ul>
 
