@@ -32,7 +32,7 @@ $rooms = [
         'name'  => 'スタンダードルーム',
         'sub'   => '- 自然のぬくもり -',
         'lead'  => '自然のぬくもり',
-        'image' => '/images/top/room-main.jpg',
+        'image' => '/images/top/room-standard.jpg',
         'body'  => '「自然のぬくもり」スタンダードルームは、自然との共感を感じるお部屋です。山の景色を楽しむことができ、ナチュラルリトリートプランには朝食が含まれています。心地よいぬくもりとくつろぎのひとときを提供します。',
     ],
     [
@@ -40,7 +40,7 @@ $rooms = [
         'name'  => 'デラックスルーム',
         'sub'   => '- 静寂の庭園 -',
         'lead'  => '静寂の庭園',
-        'image' => '/images/top/room-main.jpg',
+        'image' => '/images/top/room-deluxe.jpg',
         'body'  => '「静寂の庭園」デラックスルームは、庭園の静けさに包まれるお部屋です。四季の移ろいを窓辺から眺めることができ、庭園逍遥プランには夕食が含まれています。日常から離れた静かなひとときを提供します。',
     ],
     [
@@ -48,7 +48,7 @@ $rooms = [
         'name'  => 'プレミアスィート',
         'sub'   => '- 桜花の調べ -',
         'lead'  => '桜花の調べ',
-        'image' => '/images/top/room-main.jpg',
+        'image' => '/images/top/room-premier.jpg',
         'body'  => '「桜花の調べ」プレミアスィートは、桜の景色を望む最上級のお部屋です。専用の露天風呂を備え、特別会席プランには朝夕の食事が含まれています。何にも代えがたい贅沢なひとときを提供します。',
     ],
 ];
@@ -325,20 +325,8 @@ $top_news = [
                 </h2>
 
                 <ul class="p-blog__list">
-                    <?php foreach ($top_posts as $post): ?>
-                        <li class="c-card-article">
-                            <!-- TODO: PR4 で記事ごとの URL（/blog-detail.php?slug=…）にする -->
-                            <a class="c-card-article__link" href="/blog-detail.php">
-                                <img class="c-card-article__thumb" src="/images/top/blog-thumb.jpg"
-                                     alt="" width="380" height="230" loading="lazy">
-                                <div class="c-card-article__body">
-                                    <!-- datetime は機械可読な形。表示は Figma のダミー表記のまま -->
-                                    <time class="c-card-article__date"><?php echo h($post['date']); ?></time>
-                                    <h3 class="c-card-article__title"><?php echo h($post['title']); ?></h3>
-                                    <span class="c-card-article__tag"><?php echo h($post['category']); ?></span>
-                                </div>
-                            </a>
-                        </li>
+                    <?php foreach ($top_posts as $card): ?>
+                        <?php require __DIR__ . '/includes/card-article.php'; ?>
                     <?php endforeach; ?>
                 </ul>
 

@@ -24,6 +24,11 @@ require_once __DIR__ . '/functions.php';
 $page_title       = $page_title       ?? '楽園雅苑 - 桜庭温泉の隠れ家 -';
 $page_description = $page_description ?? '桜庭温泉の静かな山あいに佇む全12室の温泉旅館「楽園雅苑」。四季の移ろいを望む客室と、地の恵みを生かした会席料理でお迎えします。';
 
+/* 検索結果に出したくないページで true にする。
+   予約の確認・完了画面（本人しか意味を持たない）と 404 が該当する。
+   ページ側で $page_noindex = true; と書いてから読み込む */
+$page_noindex     = $page_noindex     ?? false;
+
 // 表示中のファイル名（例：about.php）。ナビの現在地判定と og:url に使う
 $current_page = current_page();
 
@@ -90,6 +95,9 @@ $reserve_nav = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo h($page_title); ?></title>
     <meta name="description" content="<?php echo h($page_description); ?>">
+<?php if ($page_noindex): ?>
+    <meta name="robots" content="noindex">
+<?php endif; ?>
 
     <!-- ファビコン（画像は images/common/ に後から配置してください） -->
     <link rel="icon" href="/images/common/favicon.ico" sizes="any">
@@ -114,10 +122,34 @@ $reserve_nav = [
     <meta name="twitter:description" content="<?php echo h($page_description); ?>">
     <meta name="twitter:image" content="<?php echo h($site_url); ?>/images/ogp.png">
 
-    <!-- Webフォント：本文 Noto Sans JP（ゴシック）／ 見出し Noto Serif JP（明朝） -->
+    <!-- Webフォント：Noto Serif JP（明朝）のみ。
+         Figma は本文・見出し・ナビ・フッターまですべて明朝で、
+         ゴシックを使う箇所が無いため Noto Sans JP は読み込まない。
+
+         ウェイトも CSS で実際に使っている 400（本文・見出し）と
+         600（記事本文の strong）だけに絞っている。
+         日本語フォントは1ウェイトあたりの容量が大きく、使わないものを
+         並べると表示開始が目に見えて遅くなるため。
+
+         display=swap … フォントの到着を待たずに代替フォントで先に表示する -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- このCSSは日本語の字形を細かく分けた指定が並ぶため約60KBある。
+         そのまま読み込むと、届くまでページが表示され始めない。
+         いったん media="print"（＝印刷用）として読み込ませて表示待ちの
+         対象から外し、届いた時点で media を all に戻して適用する。
+         display=swap を付けているので、どちらにせよ最初は代替フォントで
+         表示され、あとから明朝に入れ替わる動きは変わらない。
+         JavaScript が無い環境のために noscript で通常の読み込みも置く -->
+    <link rel="preload" as="style"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&display=swap">
+    <link rel="stylesheet" media="print" onload="this.media='all'; this.onload=null;"
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&display=swap">
+    <noscript>
+        <link rel="stylesheet"
+              href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600&display=swap">
+    </noscript>
 
     <link rel="stylesheet" href="/css/style.css">
 </head>

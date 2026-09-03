@@ -54,6 +54,11 @@
     --color-tab-off:     #edebd7;  /* 選択されていないタブ（お部屋） */
     --color-card-rule:   #c9c9c9;  /* プランカードの区切り線 */
     --color-link:        #00c2ff;  /* メール・外部URLのリンク */
+
+    /* 必須マーク（＊）とエラー文言。Figma の指定は #c00。
+       白地に対して 5.89:1 で、WCAG AA（4.5:1）を満たしている */
+    --color-error:       #c00;
+
     --color-marker:      #ffe86d;  /* 本文中のマーカー強調 */
     --color-overlay:     rgba(0, 0, 0, .6);  /* 画像の上に重ねる暗幕（ヒーロー等） */
 
@@ -68,7 +73,10 @@
        Figma は本文・見出し・ナビ・フッターまで全て Noto Serif JP（明朝）。
        ゴシックが出てくる箇所は無いので、body の既定を明朝にしている。
        --font-sans は将来ゴシックを使いたくなったときのために残す */
-    --font-sans:  "Noto Sans JP", "Hiragino Sans", "Meiryo", sans-serif;
+    /* ゴシックは Figma に出てこないため Web フォントを読み込んでいない。
+       将来ゴシックを使う場合は、端末に入っているフォントで表示される
+       （Web フォントが必要なら header.php の読み込みに足すこと） */
+    --font-sans:  "Hiragino Sans", "Meiryo", sans-serif;
     --font-serif: "Noto Serif JP", "Yu Mincho", "游明朝", serif;
 
     /* ---- 余白 ----
@@ -299,10 +307,15 @@ body.is-nav-open {
 }
 
 /* ドロワー下部：半透明のオーバーレイ側。補助リンクと予約ボタンを置く */
+/* Figma の SP メニュー（18:402）は、金の帯がヘッダー直下から 348px まで
+   続き、その下は空きになっている。ここに足している下層リンクは、
+   金の帯のすぐ下から続けて並べる。
+
+   以前は margin-top:auto で画面下端に貼り付けていたが、縦に長い画面
+   （例 642×997）で金の帯との間に大きな空白ができ、リンクだけが
+   下に離れて見えてしまうためやめた。上から詰めれば、画面の高さが
+   変わっても帯とリンクの位置関係は変わらない */
 .l-header__drawer-sub {
-    /* margin-top: auto を効かせるため、余った高さはこのブロックが受け取る。
-       項目が少ない端末では下寄せになり、多い端末では自然に伸びる */
-    margin-top: auto;
     padding: var(--space-md) var(--side-padding) 32px;
     text-align: center;
 }
@@ -1677,7 +1690,7 @@ body.is-nav-open {
 
 
 /* =============================================================
-   9. 下層ページ（運営会社・サービス）
+   9. 下層ページ（運営会社・サービス・ブログ・お知らせ・ご予約・規約類）
 
    Figma: 運営会社 PC `510:2` / SP `510:3`
           サービス   PC `538:2291` / SP `538:2380`
@@ -1786,7 +1799,7 @@ body.is-nav-open {
 }
 
 /* 温泉セクションの写真は次にテーブルが続く（Figma実測 40px） */
-.p-service__photos--sponly {
+.p-service__photos--onsen {
     margin-top: 48px;
 }
 
@@ -1989,6 +2002,460 @@ body.is-nav-open {
     display: grid;
     gap: 24px;
     margin-top: 17px;
+}
+
+
+/* =============================================================
+   9-5. ご予約（入力・確認・完了）／規約類／お知らせ詳細／404
+
+   Figma: 入力 PC `510:30` / SP `510:31`
+          確認 PC `18:583` / SP `18:657`
+          完了 PC `18:737` / SP `18:789`
+          お知らせ詳細 PC `510:443` / SP `510:468`
+          プラポリ PC `510:38` / SP `510:39`
+   ============================================================= */
+
+/* ---- 区切り線 --------------------------------------------
+   hr の既定の立体的な枠を消して、1px の線に置き換える。
+   Figma では本文幅 1200px（SP は 335px）いっぱいに引かれる
+   ------------------------------------------------------------ */
+
+.c-divider {
+    height: 1px;
+    margin: 0;
+    border: 0;
+    background-color: var(--color-border);
+}
+
+
+/* ---- 下層ページ共通のリード文 ------------------------------
+   ご予約・プラポリ・利用規約・404 で同じ大きさ・同じ位置に出る
+   ------------------------------------------------------------ */
+
+.p-page-lead {
+    font-size: 16px;
+    line-height: 32px;
+}
+
+
+/* =============================================================
+   入力フォーム（c-form）
+
+   SP はラベルを入力欄の上に積む1カラム。
+   PC ではラベル 330px ＋ 入力欄 570px の2カラムに組み替える。
+   ============================================================= */
+
+.c-form__row + .c-form__row {
+    margin-top: 16px;
+}
+
+.c-form__label {
+    display: block;
+    margin-bottom: 4px;
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+}
+
+/* 必須を表す ＊。読み上げには required 属性で伝わるので、
+   この記号自体は aria-hidden にして二重に読まれないようにしている */
+.c-form__required {
+    color: var(--color-error);
+}
+
+/* 「お子様の人数」の (12歳未満)。SP は同じ行、PC は次の行に落ちる */
+.c-form__note {
+    font-size: 13px;
+}
+
+/* ---- 入力欄の共通の見た目（Figma実測：高さ60・角丸4・罫線1px） ---- */
+
+.c-form__input,
+.c-form__select,
+.c-form__textarea {
+    /* 入力欄は既定が inline-block。行の一部として扱われるため
+       下に文字の descender ぶんの隙間（約7px）ができる。
+       block にしてその隙間を無くす */
+    display: block;
+    width: 100%;
+    padding: 0 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-white);
+    color: var(--color-text);
+    font-family: var(--font-serif);
+    font-size: 16px;
+}
+
+/* 1行の入力欄は、行送りではなく高さで文字が中央に来る。
+   line-height を指定するとブラウザによって上下位置がずれるため触らない */
+.c-form__input,
+.c-form__select {
+    height: 60px;
+    line-height: normal;
+}
+
+.c-form__textarea {
+    height: 310px;      /* Figma実測：SP 335×310 / PC 570×270 */
+    padding: 13px 20px; /* 1行目の位置を入力欄1行と揃える */
+    line-height: 34px;
+    resize: vertical;   /* 縦だけ広げられるようにする（横に広がると崩れる） */
+}
+
+/* キーボード操作でどこにいるか分かるようにする。
+   ブランドカラーは白地とのコントラストが低く枠が見えにくいので、
+   フォーカス枠だけは文字色（#383838）を使う */
+.c-form__input:focus-visible,
+.c-form__select:focus-visible,
+.c-form__textarea:focus-visible {
+    outline: 2px solid var(--color-text);
+    outline-offset: 2px;
+}
+
+/* エラーがある入力欄は枠の色でも示す（色だけに頼らず、
+   下のエラー文と aria-invalid でも伝えている） */
+.c-form__input[aria-invalid="true"],
+.c-form__select[aria-invalid="true"],
+.c-form__textarea[aria-invalid="true"] {
+    border-color: var(--color-error);
+}
+
+/* ---- プルダウン ----
+   ブラウザ既定の矢印を消し、Figma の▼（10×7.5の三角）を背景で描く。
+   SVG を data URI で埋め込むのは、画像1枚のために通信を増やさないため */
+.c-form__select {
+    appearance: none;
+    padding-right: 40px;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M0 0h10L5 7.5z' fill='%23383838'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px 8px;
+}
+
+/* 未選択のときだけ文字を薄くする。
+   先頭の選択肢の value を空にしてあるので、required と組み合わせると
+   「未選択＝:invalid」になり、この指定が当たる */
+.c-form__select:invalid {
+    color: var(--color-placeholder);
+}
+
+/* ---- ご住所のまとまり（サブラベル＋入力欄が4段） ---- */
+
+.c-form__row--group > .c-form__label {
+    margin-bottom: 3px;
+}
+
+.c-form__subrow + .c-form__subrow {
+    margin-top: 11px;
+}
+
+.c-form__sublabel {
+    display: block;
+    margin-bottom: 3px;
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 24px;
+}
+
+/* ---- エラー表示 ----
+   Figma にエラー状態のデザインは無いため、既存の色だけで組んでいる
+   （新しい色は増やさず、--color-error と既存の罫線色を使う） */
+
+.c-form__error {
+    margin-top: 6px;
+    color: var(--color-error);
+    font-size: 14px;
+    line-height: 24px;
+}
+
+.c-form__alert {
+    padding: 16px 20px;
+    border: 1px solid var(--color-error);
+    border-radius: 4px;
+}
+
+.c-form__alert-title {
+    color: var(--color-error);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+}
+
+.c-form__alert-list {
+    margin-top: 4px;
+    padding-left: 1.4em;
+    list-style: disc;
+    font-size: 14px;
+    line-height: 28px;
+}
+
+.c-form__alert-list a {
+    color: var(--color-error);
+    text-decoration: underline;
+    text-underline-offset: .2em;
+}
+
+.c-form__alert-list a:hover,
+.c-form__alert-list a:focus-visible {
+    text-decoration: none;
+}
+
+/* ---- 送信ボタン（Figma実測：SP 335×60 / PC 400×60・角丸30） ---- */
+
+.c-form__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+}
+
+.c-btn-submit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 335px;
+    height: 60px;
+    border: 0;
+    border-radius: 30px;
+    background-color: var(--color-main);
+    color: var(--color-white);
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 40px;
+    /* 字間は最後の1文字の後ろにも入るため、その分だけ右に寄る。
+       同じ幅を頭に足して見た目の中央に戻す（予約ボタンと同じ手当て） */
+    text-indent: var(--letter-spacing);
+    cursor: pointer;
+    transition: opacity .3s ease;
+}
+
+.c-btn-submit:hover,
+.c-btn-submit:focus-visible {
+    opacity: .8;
+}
+
+/* 送信中は押せなくする（js/main.js が付ける）。
+   二重送信はサーバー側でも弾いているので、これは見た目の補助 */
+.c-btn-submit:disabled {
+    opacity: .5;
+    cursor: default;
+}
+
+
+/* =============================================================
+   ご予約：入力画面（p-contact）
+   ============================================================= */
+
+.p-contact {
+    padding-block: 17px 52px;
+}
+
+.p-page-lead + .c-divider {
+    margin-top: 48px;
+}
+
+.c-divider + .c-form,
+.c-divider + .c-form__alert {
+    margin-top: 31px;
+}
+
+.c-form__alert + .c-form {
+    margin-top: 24px;
+}
+
+/* 入力欄の下・注記の上に引かれる2本目の区切り線 */
+.c-divider--form {
+    margin-top: 40px;
+}
+
+.p-contact__note {
+    margin-top: 31px;
+    font-size: 14px;
+    line-height: 30px;
+}
+
+
+/* =============================================================
+   ご予約：確認画面（p-confirm / c-summary）
+
+   SP は1行ごとに罫線を引き、ラベルの下に内容を置く。
+   PC は上下にだけ罫線を引き、ラベル左・内容右の2カラムにする。
+   ============================================================= */
+
+.p-confirm {
+    padding-block: 45px 52px;
+}
+
+/* Figma実測：1行 84px ＝ 上余白11 ＋ ラベル32 ＋ 内容32 ＋ 下余白8 ＋ 罫線1 */
+.c-summary__row {
+    padding-block: 11px 8px;
+}
+
+/* 最後の行だけ罫線を引かないのは、その下に区切り線（hr）が
+   来るため。両方引くと線が2本重なる */
+.c-summary__row:not(:last-child) {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.c-summary__label {
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+}
+
+.c-summary__value {
+    margin-left: 0;      /* dd の既定の字下げを消す */
+    font-family: var(--font-serif);
+    font-size: 16px;
+    line-height: 32px;
+    /* 入力されたメールアドレスは区切りが無く途中で折り返せないため、
+       狭い画面で画面外へはみ出す。anywhere は「はみ出す時だけ」折る */
+    overflow-wrap: anywhere;
+}
+
+.p-confirm__note {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 32px;
+}
+
+
+/* =============================================================
+   ご予約：完了画面（p-thanks）
+
+   ※ Figma は PC（`18:737`）に本文が無く、SP（`18:789`）にだけ
+     2ブロックの本文がある。見出しだけでは完了内容が伝わらないため、
+     SP の本文を PC にも出している。
+   ============================================================= */
+
+.p-thanks {
+    padding-block: 17px 60px;
+    font-size: 16px;
+    line-height: 32px;
+}
+
+/* ブロックの中の段落どうしは間隔を空けない（Figma は続けて流れている）。
+   ブロックとブロックの間だけ空ける */
+.p-thanks__block + .p-thanks__block {
+    margin-top: 40px;
+}
+
+
+/* =============================================================
+   お知らせ詳細（p-news-detail）
+
+   見出しと日付はブログ詳細と同じ見た目なので
+   .p-article__title / .p-article__date を使い回している。
+   ============================================================= */
+
+.p-news-detail {
+    padding-block: 27px 52px;
+}
+
+.p-news-detail__date {
+    display: block;      /* time は既定が inline */
+}
+
+.p-news-detail__title {
+    margin-top: 1px;
+}
+
+.p-news-detail__body {
+    margin-top: 7px;
+    font-size: 14px;
+    line-height: 30px;
+}
+
+.p-news-detail__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 36px;
+}
+
+/* 「一覧に戻る」の矢印は左端に置き、向きを反転させる。
+   同じ SVG を使い回すため、描き直さず CSS で左右を反転している */
+.c-btn-more--back .c-btn-more__arrow {
+    right: auto;
+    left: 40px;
+    transform: scaleX(-1);
+}
+
+
+/* =============================================================
+   規約類（p-legal）＝ プライバシーポリシー・利用規約
+
+   1条ぶんが「見出し ＋ 帯 ＋ 本文」の繰り返し。
+   帯は見出しの ::after で描く（要素を増やさずに済む）。
+   SP は本文幅いっぱい、PC は見出しと同じ幅（Figma実測）。
+   ============================================================= */
+
+.p-legal {
+    padding-block: 17px 60px;
+}
+
+.p-legal__section {
+    margin-top: 41px;
+}
+
+.p-legal__section + .p-legal__section {
+    margin-top: 33px;
+}
+
+.p-legal__title {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    line-height: 32px;
+}
+
+.p-legal__title::after {
+    content: "";
+    display: block;
+    height: 2px;
+    margin-top: 4px;
+    background-color: var(--color-main);
+}
+
+.p-legal__body {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 30px;
+    /* メールアドレスのような区切りの無い英数字は、そのままだと
+       途中で折り返せず画面からはみ出す。anywhere は「はみ出す時だけ」
+       途中で折る指定なので、通常の英単語は不用意に分割されない */
+    overflow-wrap: anywhere;
+}
+
+/* Figma の箇条書きには記号も字下げも無く、前後の段落との間隔も
+   空いていない。見た目はそれに合わせつつ、マークアップは ul のままに
+   しているので、読み上げには「リスト、5項目」と伝わる */
+.p-legal__list {
+    padding-left: 0;
+    list-style: none;
+}
+
+
+/* SP だけ出す中黒（「町域・番地・建物名」）。
+   PC ではここで改行するため、u-br-pc と対で使う */
+.u-inline-sp {
+    display: inline;
+}
+
+
+/* =============================================================
+   404（p-notfound）
+
+   Figma にデザインが無いため、既存の部品だけで組んでいる。
+   ============================================================= */
+
+.p-notfound {
+    padding-block: 17px 60px;
+}
+
+.p-notfound__action {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
 }
 
 
@@ -2688,16 +3155,16 @@ body.is-nav-open {
         margin-top: 68px;
     }
 
-    /* 温泉セクションの2枚は SP にしか無い。
-       PC は Figma どおり約490pxの余白として残す */
-    .p-service__photos--sponly {
-        display: block;
-        height: 498px;
-        margin-top: 0;
-    }
-
-    .p-service__photos--sponly > li {
-        display: none;
+    /* 温泉セクションの2枚。
+       Figma の PC フレーム（538:2291）はこの位置が約490pxの空白で、
+       写真は SP フレームにしか置かれていない。ただし空白のままだと
+       ページとして意図が伝わらないため、同じページの他セクション
+       （レストラン等）と同じ 580×370 の2枚組で埋めている。
+       空白490pxの中央に来るよう、上下に64pxずつ余白を取る
+       （テーブルの開始位置は Figma どおり 1277px に揃う） */
+    .p-service__photos--onsen {
+        margin-top: 64px;
+        margin-bottom: 64px;
     }
 
     /* Figma実測：テーブルは本文900px（x=270〜1170） */
@@ -2950,6 +3417,276 @@ body.is-nav-open {
         gap: 30px;
         max-width: 860px;
         margin-top: 51px;
+    }
+
+    /* ---- 9-5. ご予約・規約類・お知らせ詳細・404 ---- */
+
+    .p-page-lead {
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    /* ---- 入力フォーム ----
+       Figma実測：本文は 900px（x=270〜1170）で、1200px の中央に置く。
+       区切り線だけは 1200px のままなので、幅を絞るのは行のほうに掛ける */
+
+    .c-form__row,
+    .c-form__action,
+    .c-form__alert,
+    .p-contact__note {
+        max-width: 900px;
+        margin-inline: auto;
+    }
+
+    /* ラベル 330px ＋ 入力欄 570px の2カラム */
+    .c-form__row {
+        display: flex;
+    }
+
+    .c-form__label {
+        flex: none;
+        width: 330px;
+        /* 行の高さは入力欄（60px）で決める。
+           2行になるラベルが行を押し広げ、以降の項目が
+           下にずれてしまうのを防ぐため高さを固定する */
+        height: 60px;
+        margin-bottom: 0;
+        /* 高さ60の入力欄に対して、1行（34px）のラベルを中央に合わせる。
+           flex で中央寄せにしないのは、ラベルの中に <br> を入れている
+           項目（お子様の人数）が flex だと改行できなくなるため */
+        padding-top: 13px;
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    /* 2行になるラベル（お子様の人数）は、上に寄せて入力欄と頭を揃える */
+    .c-form__label--two-line {
+        padding-top: 5px;
+    }
+
+    .c-form__field {
+        flex: 1;
+        min-width: 0;   /* flex の子は既定で縮まないため、明示して溢れを防ぐ */
+    }
+
+    .c-form__row + .c-form__row {
+        margin-top: 20px;   /* 高さ60 ＋ 20 ＝ Figma の行ピッチ80px */
+    }
+
+    /* PC では次の行に落とす。<br> ではなくブロックにするのは、
+       SP では同じ行に出したいため（SP は display:inline のまま） */
+    .c-form__note {
+        display: block;
+        line-height: 24px;
+    }
+
+    .c-form__textarea {
+        height: 270px;
+    }
+
+    /* ご住所は「サブラベル 140px ＋ 入力欄 430px」を4段 */
+    .c-form__row--group > .c-form__label {
+        margin-bottom: 0;
+    }
+
+    .c-form__subrow {
+        display: flex;
+    }
+
+    .c-form__subrow + .c-form__subrow {
+        margin-top: 20px;
+    }
+
+    .c-form__sublabel {
+        flex: none;
+        width: 140px;
+        margin-bottom: 0;
+        padding-top: 13px;
+        font-size: 16px;
+        line-height: 34px;
+    }
+
+    /* 「町域・番地／建物名」は PC だけ2行になるので、上に寄せる */
+    .c-form__sublabel--two-line {
+        padding-top: 6px;
+        line-height: 26px;
+    }
+
+    .c-form__subfield {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .c-form__select {
+        padding-right: 50px;
+        background-position: right 20px center;
+    }
+
+    .c-form__action {
+        margin-top: 48px;
+    }
+
+    .c-btn-submit {
+        max-width: 400px;
+        font-size: 18px;
+    }
+
+    /* ---- 入力画面 ---- */
+
+    .p-contact {
+        padding-block: 58px 200px;
+    }
+
+    .p-page-lead + .c-divider {
+        margin-top: 88px;
+    }
+
+    .c-divider + .c-form,
+    .c-divider + .c-form__alert {
+        margin-top: 79px;
+    }
+
+    .c-divider--form {
+        margin-top: 80px;
+    }
+
+    .p-contact__note {
+        margin-top: 51px;
+        font-size: 16px;
+        line-height: 32px;
+    }
+
+    /* ---- 確認画面 ----
+       PC は行ごとの罫線をやめ、上下の区切り線だけにする */
+
+    .p-confirm {
+        padding-block: 66px 200px;
+    }
+
+    .c-summary {
+        max-width: 900px;
+        margin-inline: auto;
+        padding-block: 71px 65px;
+    }
+
+    .c-summary__row {
+        display: flex;
+        padding-block: 0;
+    }
+
+    .c-summary__row:not(:last-child) {
+        border-bottom: 0;
+    }
+
+    .c-summary__row + .c-summary__row {
+        margin-top: 3px;    /* 1行（34px）＋ 3 ＝ Figma の行ピッチ37px */
+    }
+
+    .c-summary__label {
+        flex: none;
+        width: 335px;
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    .c-summary__value {
+        flex: 1;
+        min-width: 0;
+        line-height: 34px;
+    }
+
+    .p-confirm__note {
+        max-width: 900px;
+        margin-inline: auto;
+        margin-top: 71px;
+        font-size: 16px;
+        line-height: 32px;
+    }
+
+    /* ---- 完了画面 ---- */
+
+    .p-thanks {
+        padding-block: 58px 200px;
+        font-size: 18px;
+        line-height: 34px;
+    }
+
+    /* ---- お知らせ詳細 ---- */
+
+    .p-news-detail {
+        padding-block: 86px 200px;
+    }
+
+    .p-news-detail__title {
+        margin-top: 5px;
+    }
+
+    .p-news-detail__body {
+        margin-top: 13px;
+        font-size: 16px;
+        line-height: 32px;
+    }
+
+    .p-news-detail__action {
+        margin-top: 68px;
+    }
+
+    .c-btn-more--back .c-btn-more__arrow {
+        left: 52px;
+    }
+
+    /* ---- 規約類 ---- */
+
+    .p-legal {
+        padding-block: 58px 188px;
+    }
+
+    .p-legal__section {
+        margin-top: 62px;
+    }
+
+    .p-legal__section + .p-legal__section {
+        margin-top: 42px;
+    }
+
+    /* PC の帯は見出しと同じ幅。見出し自体を文字幅に縮めて、
+       帯（::after）を 100% にすることで自動的に揃う */
+    .p-legal__title {
+        width: fit-content;
+        font-size: 22px;
+        line-height: 34px;
+    }
+
+    /* fit-content の幅には行末の字間が含まれる（Figma の文字幅には含まれない）。
+       帯だけその1つぶんを詰めて、Figma と同じ幅にする */
+    .p-legal__title::after {
+        width: calc(100% - var(--letter-spacing));
+    }
+
+    .p-legal__body {
+        margin-top: 24px;
+        font-size: 16px;
+        line-height: 32px;
+        /* CSS は行末の1文字の後ろにも字間を入れるが、Figma は入れない。
+           そのぶん1行に収まる文字数が減り、条文が Figma より1行増える。
+           右へ字間1つぶん広げて Figma と同じ位置で折り返させる。
+           SP では折り返し位置が変わらないので PC だけに掛ける */
+        margin-right: calc(var(--letter-spacing) * -1);
+    }
+
+    /* ---- 404 ---- */
+
+    .p-notfound {
+        padding-block: 58px 200px;
+    }
+
+    .p-notfound__action {
+        margin-top: 60px;
+    }
+
+    /* SP だけ出す中黒（「町域・番地・建物名」）。PC は改行するので消す */
+    .u-inline-sp {
+        display: none;
     }
 }
 
