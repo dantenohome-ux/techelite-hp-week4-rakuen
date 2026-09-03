@@ -10,6 +10,8 @@
 
    方針：モバイルファースト。既定を SP（375px）向けに書き、
          @media (min-width: 768px) の中で PC（1440px）向けに上書きする。
+        ただし 768〜1239px は Figma の PC 幅（本文1200px）が収まらないため、
+        列数を減らす調整を別途入れている。ヘッダーの横並びも 1240px から。
    ============================================================= */
 
 
@@ -1415,12 +1417,17 @@ body.is-nav-open {
     gap: 20px;
 }
 
+/* 高さは min-height で持たせる。
+   height 固定にしていたため、幅が狭くて部屋名が2行に折り返す幅
+   （768px 付近の3列）で、文字が背景の外へはみ出していた。
+   Figma の幅では中身が2行で収まるので、見た目の高さは変わらない */
 .p-room__tab {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 76px;
+    min-height: 76px;
+    padding: 8px 12px;
     background-color: var(--color-tab-off);
     font-family: var(--font-serif);
     font-size: 18px;
@@ -2504,67 +2511,12 @@ body.is-nav-open {
    ============================================================= */
 @media (min-width: 768px) {
 
+    /* 左右の余白は画面幅に応じて縮める。
+       1440px で 120px（Figma の実測値）になる 8.334vw を上限 120px で止め、
+       狭い画面では 20px まで詰めて本文の幅を確保する。
+       1440px 以上では 120px に固定されるので、Figma との一致は変わらない */
     :root {
-        --header-height: 178px;
-        --side-padding:  120px;
-    }
-
-    /* ---- ヘッダー ---- */
-    .l-header__logo-image {
-        width: 150px;
-    }
-
-    /* ドロワーをやめて、ただの横並びメニューに戻す */
-    .l-header__nav {
-        position: static;
-        flex-direction: row;
-        align-items: center;
-        overflow: visible;
-        margin-right: var(--space-lg);
-        background-color: transparent;
-        opacity: 1;
-        visibility: visible;
-    }
-
-    .l-header__menu {
-        display: flex;
-        align-items: center;
-        gap: var(--space-lg);
-        padding: 0;
-        background-color: transparent;
-    }
-
-    .l-header__item + .l-header__item {
-        margin-top: 0;
-    }
-
-    .l-header__link {
-        padding: 0;
-        font-size: 18px;
-        line-height: 46px;
-        text-indent: 0;
-        transition: opacity .3s ease;
-    }
-
-    .l-header__link:hover,
-    .l-header__link:focus-visible {
-        opacity: .7;
-    }
-
-    /* 補助リンクと予約ボタンは SP ドロワー専用。PC ではフッターが受け持つ */
-    .l-header__drawer-sub {
-        display: none;
-    }
-
-    /* ハンバーガーも不要 */
-    .l-header__hamburger {
-        display: none;
-    }
-
-    /* ---- 予約ボタン ---- */
-    .c-btn-reserve--header {
-        min-width: 140px;
-        height: 40px;
+        --side-padding: clamp(20px, 8.334vw, 120px);
     }
 
     /* ---- フッター ---- */
@@ -2735,13 +2687,17 @@ body.is-nav-open {
 
     /* 縦組みの「SCROOLL」と、その下の縦線。
        Figma実測：右端から100px、下端から80px、線は 1×154 */
+    /* 右位置を左右余白に追従させる。
+       right:100px 固定にしていたため、余白が縮む幅（768px 付近）で
+       この指標が本文の領域に入り込み、キャッチや本文の文字と
+       重なっていた。1440px では余白120 − 20 ＝ 100px で従来どおり */
     .p-hero__scroll {
         display: flex;
         flex-direction: column;
         align-items: center;
         gap: 20px;
         position: absolute;
-        right: 100px;
+        right: calc(var(--side-padding) - 20px);
         bottom: 80px;
         color: var(--color-white);
     }
@@ -2769,10 +2725,14 @@ body.is-nav-open {
     }
 
     /* 左に文、右に組み写真。右カラムは写真の実寸（610px）で固定する */
+    /* minmax(0, 610px) にすると、画面が狭いときに写真の列が縮む。
+       1fr 610px のままだと 610px を確保しようとして本文が押し出され、
+       1240px 未満で画面からはみ出していた。
+       余白も同じ考えで、1440px のとき 90px になる値を上限にしている */
     .p-concept__inner {
         display: grid;
-        grid-template-columns: 1fr 610px;
-        gap: 90px;
+        grid-template-columns: 1fr minmax(0, 610px);
+        gap: clamp(32px, 6.25vw, 90px);
         align-items: start;
     }
 
@@ -2798,20 +2758,27 @@ body.is-nav-open {
         padding-bottom: 60px;   /* 小さい写真が下にはみ出すぶん */
     }
 
+    /* 列の幅に追従させる。縦横比を保つので、縮んでも写真は歪まない
+       （1440px では 610×460 ＝ Figma の実測値どおり） */
     .p-concept__image--large {
-        width: 610px;
-        height: 460px;
+        width: 100%;
+        height: auto;
+        aspect-ratio: 610 / 460;
         margin-left: 0;
         object-fit: cover;
     }
 
     /* 大きい写真の左辺をまたいで重なる（Figma実測 x=585 / y=+270） */
+    /* 大きい写真に対する割合で置く。px 固定だと、写真が縮んだときに
+       位置だけ取り残されて本文の上に大きくかぶってしまう。
+       1440px では left -125px / top 270px / 250×250 に一致する */
     .p-concept__image--small {
-        left: -125px;
-        top: 270px;
+        left: -20.5%;
+        top: 51.93%;
         bottom: auto;
-        width: 250px;
-        height: 250px;
+        width: 41%;
+        height: auto;
+        aspect-ratio: 1;
         object-fit: cover;
     }
 
@@ -2840,7 +2807,7 @@ body.is-nav-open {
     }
 
     .p-room__tab {
-        height: 80px;
+        min-height: 80px;
         line-height: 27px;
     }
 
@@ -3297,11 +3264,11 @@ body.is-nav-open {
     }
 
     /* Figma実測：記事860px ＋ サイドバー300px、間40px */
+    /* 記事本文 ＋ サイドバー 300px の2カラム。
+       1240px 未満では横幅が足りず記事本文がはみ出すため、
+       下の 1240px 用ブロックへ移している（それ未満は SP と同じ1カラム） */
     .p-article__inner {
-        display: grid;
-        grid-template-columns: 1fr 300px;
         gap: 40px;
-        align-items: start;
     }
 
     /* Figma実測：内側の余白は左右40px。上は文字のトリミング分を差し引いて28px */
@@ -3692,6 +3659,175 @@ body.is-nav-open {
 
 
 /* =============================================================
+   768px 〜 1239px（タブレット相当）
+
+   Figma は 375px と 1440px しか無く、PC のレイアウトは
+   「本文 1200px」を前提に組んである。1200px を確保できない幅では
+   3列のカードや固定幅のサイドバーが収まらないため、この範囲だけ
+   列数を減らして収める。
+
+   1240px 以上には影響しない（この指定は max-width で閉じている）
+   ============================================================= */
+@media (min-width: 768px) and (max-width: 1239px) {
+
+    /* 3列 → 2列。1列あたりの幅を確保して、カードの中身が溢れないようにする */
+    .p-plan__list,
+    .p-blog__list,
+    .p-blog-list__grid,
+    .c-photo-grid--3 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* カードの内側の余白も詰める（40px だと中身の幅が残らない） */
+    .c-card-plan {
+        padding: 24px;
+    }
+
+    /* フレックス／グリッドの子は既定で中身の幅より縮まないため、
+       明示しないとカードがはみ出す */
+    .c-card-article,
+    .c-card-plan {
+        min-width: 0;
+    }
+
+    /* コンセプトは縦に積む。
+       写真610px ＋ 余白 を確保すると本文の列が 200px 前後まで潰れ、
+       22px の文字が数文字ごとに改行されて読めなくなるため */
+    .p-concept__inner {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 48px;
+    }
+
+    /* ロゴと本文をまとめて写真と同じ幅に収め、中央へ寄せる
+       （.p-concept__text だけに掛けるとロゴが左に取り残される） */
+    .p-concept__body {
+        max-width: 610px;
+        margin-inline: auto;
+    }
+
+    .p-concept__text {
+        margin-top: 0;
+    }
+
+    /* 写真は Figma の 610px を上限に、中央へ寄せる。
+       小さい写真は割合で置いてあるので、これだけで位置も追従する */
+    .p-concept__images {
+        max-width: 610px;
+        margin-inline: auto;
+    }
+}
+
+
+/* =============================================================
+   1440px 未満：プランカードの値段を折り返せるようにする
+
+   「一泊の値段 : 30,000円/1部屋」の行は 305px 必要で、
+   カード内寸が 300px になる 1440px でだけ1行に収まる。
+   それ未満（1240〜1439px ではカード 319〜380px）では1行のままだと
+   カードの外へ文字がはみ出すため、折り返しを許す
+   ============================================================= */
+@media (max-width: 1439px) {
+
+    .c-card-plan__spec-row {
+        white-space: normal;
+    }
+}
+
+
+/* =============================================================
+   1240px 以上（Figma の PC デザインがそのまま収まる幅）
+
+   PC のヘッダーは 左右余白240 ＋ ロゴ150 ＋ ナビ651 ＋ 余白40 ＋
+   予約ボタン140 ＝ 1221px を必要とする。
+   これを 768px から出していたため、1240px 未満ではナビの各項目が
+   縮んで1文字ずつ改行される状態になっていた。
+   収まる幅になってから横並びに切り替え、それ未満はハンバーガーの
+   ドロワーを使う。
+
+   ※ js/main.js の matchMedia もこの値（1240px）に合わせてある
+   ============================================================= */
+@media (min-width: 1240px) {
+
+    :root {
+        --header-height: 178px;
+    }
+
+    /* ---- ヘッダー ---- */
+    .l-header__logo-image {
+        width: 150px;
+    }
+
+    /* ドロワーをやめて、ただの横並びメニューに戻す */
+    .l-header__nav {
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        overflow: visible;
+        margin-right: var(--space-lg);
+        background-color: transparent;
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .l-header__menu {
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+        padding: 0;
+        background-color: transparent;
+    }
+
+    /* 項目を縮ませない。フレックスの子は既定で縮むため、
+       指定が無いと幅が足りないときに1文字ずつ改行されてしまう */
+    .l-header__item,
+    .l-header__link {
+        flex: none;
+        white-space: nowrap;
+    }
+
+    .l-header__item + .l-header__item {
+        margin-top: 0;
+    }
+
+    .l-header__link {
+        padding: 0;
+        font-size: 18px;
+        line-height: 46px;
+        text-indent: 0;
+        transition: opacity .3s ease;
+    }
+
+    .l-header__link:hover,
+    .l-header__link:focus-visible {
+        opacity: .7;
+    }
+
+    /* 補助リンクと予約ボタンは SP ドロワー専用。PC ではフッターが受け持つ */
+    .l-header__drawer-sub {
+        display: none;
+    }
+
+    /* ハンバーガーも不要 */
+    .l-header__hamburger {
+        display: none;
+    }
+
+    /* ---- 予約ボタン ---- */
+    .c-btn-reserve--header {
+        min-width: 140px;
+        height: 40px;
+    }
+
+    /* ---- ブログ詳細：記事本文 ＋ サイドバー 300px の2カラム ---- */
+    .p-article__inner {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        align-items: start;
+    }
+}
+
+
+/* =============================================================
    縦の短い端末（iPhone SE 相当 = 高さ 667px など）
    ドロワーの項目数が多いぶん、既定の余白のままだと
    最下部の予約ボタンが画面外に出てしまうので詰める。
@@ -3699,6 +3835,22 @@ body.is-nav-open {
    max-width も付けているのは、この下に PC 用の指定があり、
    幅の広い画面でこの指定が後勝ちしてしまうのを防ぐため
    ============================================================= */
+/* =============================================================
+   375px 未満の狭い端末
+
+   プランの「一泊の値段 : 30,000円/1部屋」は、カード内寸 271px
+   （SP 335 の想定）にちょうど収まる前提で1行に固定している。
+   320px 端末ではカードがさらに狭く、1行のままでは画面から
+   はみ出すため折り返しを許す
+   ============================================================= */
+@media (max-width: 374px) {
+
+    .c-card-plan__spec-row {
+        white-space: normal;
+    }
+}
+
+
 @media (max-width: 767px) and (max-height: 720px) {
 
     .l-header__menu {

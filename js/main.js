@@ -24,8 +24,11 @@
         // どちらか無いページでは何もしない（エラーで後続処理が止まらないように）
         if (!hamburger || !nav) return;
 
-        // CSS のブレークポイント（768px）と同じ値。PC幅になったかの判定に使う
-        var mqPc = window.matchMedia('(min-width: 768px)');
+        // CSS のブレークポイントと同じ値。PC幅になったかの判定に使う。
+        // ヘッダーが横並びに切り替わるのは 1240px から（style.css と対応）。
+        // ここを 768px にしておくと、まだハンバーガーが見えている幅で
+        // 「PCになった」と判断してドロワーを閉じてしまう
+        var mqPc = window.matchMedia('(min-width: 1240px)');
 
         function isOpen() {
             return nav.classList.contains('is-open');
